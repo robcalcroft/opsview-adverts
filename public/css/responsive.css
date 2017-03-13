@@ -1,0 +1,9 @@
+@media screen and (max-width: 1000px) {
+  nav {
+    padding: 5% 5%;
+  }
+  main {
+    margin: 5% 5%;
+    display: block;
+  }
+}

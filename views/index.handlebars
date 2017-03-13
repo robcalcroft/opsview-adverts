@@ -1,0 +1,58 @@
+<main>
+  {{#if success}}
+    <p class="success">{{success}}</p>
+  {{/if}}
+  {{#if error}}
+    <p class="error">{{error}}</p>
+  {{/if}}
+  <div class="actions">
+    <h1>Advert Actions</h1>
+    <form action="/action" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="toggle_adverts_status" value="{{adverts_status_toggled}}">
+      <button type="submit">
+        {{#if adverts_status}}
+          Disable all adverts
+        {{else}}
+          Enable all adverts
+        {{/if}}
+      </button>
+    </form>
+  </div>
+  <div class="advert">
+    <div class="currentAdvert">
+      <h1>Current Adverts</h1>
+      <p>Hello</p>
+    </div>
+    <div class="newAdvert">
+      <h1>Add New Advert</h1>
+      <p>
+        <form action="/advert" method="post" enctype="multipart/form-data">
+          <div class="separator">
+            <label for="target_version">Ad Campaign Name:</label>
+            <input id="campaign_name" type="text" name="campaign_name" required>
+          </div>
+          <div class="separator">
+            <label for="target_version">Ad Target Version:</label>
+            <select id="target_version" name="target_version" multiple required>
+              <option selected value="5.3">5.3.0</option>
+              <option value="5.2.1">5.2.1</option>
+              <option value="5.2.0">5.2.0</option>
+              <option value="5.1.0">5.1.0</option>
+              <option value="5.0.2">5.0.2</option>
+              <option value="5.0.1">5.0.1</option>
+              <option value="5.0.0">5.0.0</option>
+              <option value="4.6.0">4.6.0</option>
+            </select>
+          </div>
+          <div class="separator">
+            <label for="advert_image">Ad Image:</label>
+            <input id="advert_image" type="file" name="advert_image" required>
+          </div>
+          <div class="separator">
+            <button type="submit">Submit</button>
+          </div>
+        </form>
+      </p>
+    </div>
+  </div>
+</main>
