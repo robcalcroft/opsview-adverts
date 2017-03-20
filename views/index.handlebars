@@ -1,4 +1,47 @@
-<main>
+<nav class="navbar navbar-light bg-faded">
+  <div class="container">
+    <h1 class="navbar-brand mb-0">Opsview Adverts</h1>
+  </div>
+</nav>
+<div class="container">
+  <div class="mt-4">
+    {{#if success}}
+      <div class="alert alert-success" role="alert">{{success}}</div>
+    {{/if}}
+    {{#if error}}
+      <div class="alert alert-error" role="alert">{{error}}</div>
+    {{/if}}
+    <div class="row">
+      <div class="col-md-8">
+        <h2>Adverts</h2>
+        {{#each adverts}}
+          <div class="card">
+            <img class="card-img-top" src="https://fillmurray.com/225/300" alt="Card image cap">
+            <div class="card-block">
+              <h4 class="card-title">{{this.campaignName}}</h4>
+              <p class="card-text">{{this.targetVersion}}</p>
+              <a href="#" class="btn btn-primary">Go somewhere</a>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+      <div class="col-md-4">
+        <h2>Actions</h2>
+        <form action="/action" method="post" enctype="multipart/form-data" class="mt-2 mb-2">
+          <input type="hidden" name="toggle_adverts_status" value="{{adverts_status_toggled}}">
+          <button type="submit" class="btn btn-primary">
+            {{#if adverts_status}}
+              Disable all adverts
+            {{else}}
+              Enable all adverts
+            {{/if}}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{{!-- <main>
   {{#if success}}
     <p class="success">{{success}}</p>
   {{/if}}
@@ -7,16 +50,7 @@
   {{/if}}
   <div class="actions">
     <h1>Advert Actions</h1>
-    <form action="/action" method="post" enctype="multipart/form-data">
-      <input type="hidden" name="toggle_adverts_status" value="{{adverts_status_toggled}}">
-      <button type="submit">
-        {{#if adverts_status}}
-          Disable all adverts
-        {{else}}
-          Enable all adverts
-        {{/if}}
-      </button>
-    </form>
+
   </div>
   <div class="advert">
     <div class="currentAdvert">
@@ -55,4 +89,4 @@
       </p>
     </div>
   </div>
-</main>
+</main> --}}

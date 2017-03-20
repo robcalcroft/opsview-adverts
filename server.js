@@ -24,6 +24,7 @@ app.get('/', (req, res) => {
   res.render('index', {
     adverts_status: db.adverts_status,
     adverts_status_toggled: !db.adverts_status,
+    adverts: db.adverts,
   })
 });
 app.get('*', (req, res) => res.render('404'));
