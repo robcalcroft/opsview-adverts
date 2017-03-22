@@ -14,7 +14,7 @@ const client = s3.createClient({
 });
 const router = express.Router();
 
-router.get('/advert', (req, res) => res.render('new-advert'));
+router.get('/advert', (req, res) => res.render('advert'));
 
 router.post('/advert', multer.single('advert_image'), (req, res) => {
   const db = require(process.env.DATABASE_PATH); // eslint-disable-line
@@ -23,14 +23,14 @@ router.post('/advert', multer.single('advert_image'), (req, res) => {
 
   // Check the uploaded image is less than 2mb
   if (req.file.size > (oneMb * 2)) {
-    return res.render('new-advert', {
+    return res.render('advert', {
       error: `Uploaded file was ${(req.file.size / oneMb).toFixed(1)}mb; it must be less than 2mb`,
     });
   }
 
   // Check the uploaded image is a PNG or JPEG
   if (req.file.mimetype !== 'image/png' && req.file.mimetype !== 'image/jpeg') {
-    return res.render('new-advert', {
+    return res.render('advert', {
       error: 'Uploaded file must be a PNG or a JPEG',
     });
   }
@@ -66,9 +66,9 @@ router.post('/advert', multer.single('advert_image'), (req, res) => {
     },
   });
 
-  databaseUploader.on('error', error => res.render('new-advert', { error: `Unable to sync: ${error.stack}` }));
+  databaseUploader.on('error', error => res.render('advert', { error: `Unable to sync: ${error.stack}` }));
 
-  databaseUploader.on('end', () => {
+  return databaseUploader.on('end', () => {
     // Start the upload for the image
     const imageUploader = client.uploadFile({
       localFile: newFileLocation,
@@ -81,9 +81,9 @@ router.post('/advert', multer.single('advert_image'), (req, res) => {
     });
 
     // Should remove entry from databse if we get an error here
-    imageUploader.on('error', error => res.render('new-advert', { error: `Unable to sync: ${error.stack}` }));
+    imageUploader.on('error', error => res.render('advert', { error: `Unable to sync: ${error.stack}` }));
 
-    imageUploader.on('end', () => res.render('new-advert', { success: `New advert ${req.body.advert_name} added to S3` }));
+    imageUploader.on('end', () => res.render('advert', { success: `New advert ${req.body.advert_name} added to S3` }));
   });
 });
 

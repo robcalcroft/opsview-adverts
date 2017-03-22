@@ -6,6 +6,7 @@
   "author": "Rob Calcroft <rob@calcroft.com>",
   "license": "MIT",
   "scripts": {
+    "lint": "eslint routes/ server.js",
     "start": "DATABASE_PATH=$PWD/adverts/adverts.json PORT=8000 nodemon --ignore adverts/"
   },
   "dependencies": {

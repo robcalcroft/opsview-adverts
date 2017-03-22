@@ -1,7 +1,10 @@
 const express = require('express');
 const fs = require('fs');
+const dotenv = require('dotenv');
 const moment = require('moment');
 const multer = require('multer')({ dest: 'tmp/' });
+
+dotenv.load();
 
 const router = express.Router();
 

@@ -1,5 +1,8 @@
 const express = require('express');
+const dotenv = require('dotenv');
 const moment = require('moment');
+
+dotenv.load();
 
 const router = express.Router();
 
