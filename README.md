@@ -8,7 +8,7 @@
 
 #### Why use a JSON file instead of a static S3 URL?
 - Caching issues are common, especially when dealing with international users who could be served an out of date advert. Instead this solution uses a base64 encoded unique filename to mitigate this issue.
-- The JSON file allows us to add conditions to adverts being shown, for example showing certain adverts for certain device types, Opview Monitor versions or being able to gloablly control whether adverts are shown, without a crude solution of removing the assets.
+- The JSON file allows us to add conditions to adverts being shown, for example showing certain adverts for certain device types, Opsview Monitor versions or being able to globally control whether adverts are shown, without a crude solution of removing the assets.
 
 ## Install
 1. Clone this repo
@@ -17,18 +17,48 @@
 4. Run `mkdir $PWD/tmp` to create the temporary directory needed for file uploads
 
 ## Usage
-### Development
+### Server
+#### Development
 ```
 DATABASE_PATH=$PWD/adverts/adverts.json PORT=8000 yarn start
 ```
 
-### Production
+#### Production
 For production a robust Node.js process management solution should be used; [PM2](https://github.com/Unitech/pm2) is a good start. Then something like NGINX can be used to proxy the requests to `8000` or whatever port is used.
 ```
 DATABASE_PATH=$PWD/adverts/adverts.json PORT=8000 pm2 start server.js --name opsview-adverts --no-vizion
 ```
 
 > DATABASE_PATH can also be specified in the `.env` file
+
+### Client
+Clients should make a request to `GET https://s3.amazonaws.com/opsview-adverts/adverts.json` to retrieve information about adverts.
+
+#### API
+```
+{
+  // True for global enable, false for global disable
+  adverts_status: Boolean,
+  // This could be empty, even if adverts_status is true
+  adverts: [
+    {
+      // The name of the advert campaign
+      advertName: String,
+      // The versions of Opsview to target this advert to
+      // ['5.3.0', '5.2.1'] | 'all'
+      targetVersion: Array | String,
+      // The URL to send users to when they interact with the advert
+      redirectUrl: String,
+      // A unix timestamp of when the advert was added
+      created: Number,
+      // The direct URL to load as an image on the client
+      s3Url: String,
+      // The name of the advert image file
+      imageFileName: String,
+    }
+  ]
+}
+```
 
 ## Development
 - Any changes to the code should follow [Airbnb's JavaScript styleguide](https://github.com/airbnb/javascript), this is enforced with ESLint

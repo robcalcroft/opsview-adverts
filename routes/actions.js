@@ -1,11 +1,10 @@
 const express = require('express');
-const fs = require('fs');
 const dotenv = require('dotenv');
-const moment = require('moment');
 const multer = require('multer')({ dest: 'tmp/' });
 
 dotenv.load();
 
+const writeAndUploadFile = require(`${process.env.PWD}/helpers.js`).writeAndUploadFile; // eslint-disable-line
 const router = express.Router();
 
 router.post('/action', multer.array(), (req, res) => {
@@ -15,18 +14,23 @@ router.post('/action', multer.array(), (req, res) => {
 
   db.adverts_status = advertsStatus;
 
-  // Update the database
-  fs.writeFileSync(process.env.DATABASE_PATH, JSON.stringify(db));
-
-  res.render('index', {
+  const responseData = {
     adverts_status: db.adverts_status,
     adverts_status_toggled: !db.adverts_status,
     adverts: db.adverts.reverse(),
     show_adverts: db.adverts.length > 0,
-    success: `Adverts ${advertsStatus ? 'enabled' : 'disabled'}`,
-    helpers: {
-      created: time => moment.unix(time).fromNow(),
-    },
+  };
+
+  writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, JSON.stringify(db), (error) => {
+    if (error) {
+      return res.render('index', Object.assign({}, responseData, {
+        error: `Unable to upload ${process.env.DATABASE_PATH}: ${error.stack}`,
+      }));
+    }
+
+    return res.render('index', Object.assign({}, responseData, {
+      success: `Adverts ${advertsStatus ? 'enabled' : 'disabled'}`,
+    }));
   });
 });
 

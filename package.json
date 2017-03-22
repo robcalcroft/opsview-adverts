@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "lint": "eslint routes/ server.js",
-    "start": "DATABASE_PATH=$PWD/adverts/adverts.json PORT=8000 nodemon --ignore adverts/"
+    "start": "DATABASE_PATH=$PWD/adverts/adverts.json PORT=8000 node server.js"
   },
   "dependencies": {
     "body-parser": "^1.17.1",

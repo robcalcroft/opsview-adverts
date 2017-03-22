@@ -1,17 +1,11 @@
 const express = require('express');
 const fs = require('fs');
-const multer = require('multer')({ dest: 'tmp/' });
-const s3 = require('s3');
 const dotenv = require('dotenv');
+const multer = require('multer')({ dest: 'tmp/' });
 
 dotenv.load();
 
-const client = s3.createClient({
-  s3Options: {
-    accessKeyId: process.env.AMAZON_ACCESS_KEY,
-    secretAccessKey: process.env.AMAZON_SECRET,
-  },
-});
+const helpers = require(`${process.env.PWD}/helpers.js`); // eslint-disable-line
 const router = express.Router();
 
 router.get('/advert', (req, res) => res.render('advert'));
@@ -19,7 +13,6 @@ router.get('/advert', (req, res) => res.render('advert'));
 router.post('/advert', multer.single('advert_image'), (req, res) => {
   const db = require(process.env.DATABASE_PATH); // eslint-disable-line
   const oneMb = 1000000;
-  const bucket = 'opsview-adverts-testing';
 
   // Check the uploaded image is less than 2mb
   if (req.file.size > (oneMb * 2)) {
@@ -36,12 +29,13 @@ router.post('/advert', multer.single('advert_image'), (req, res) => {
   }
 
   // Construct a unique file name for S3
-  let fileName = new Buffer(`${req.file.originalname}-${new Date().getTime()}`).toString('base64');
-  fileName += `.${req.file.mimetype.split('/')[1]}`;
-  const newFileLocation = `${process.env.PWD}/adverts/${fileName}`;
+  let imageFileName = new Buffer(`${req.file.originalname}-${new Date().getTime()}`).toString('base64');
+  // Add the file extension from the mimetype
+  imageFileName += `.${req.file.mimetype.split('/')[1]}`;
+  const newImageFileLocation = `${process.env.PWD}/adverts/${imageFileName}`;
 
-  // Move file to adverts folder
-  fs.renameSync(`${process.env.PWD}/${req.file.path}`, newFileLocation);
+  // Move advert to adverts folder
+  fs.renameSync(`${process.env.PWD}/${req.file.path}`, newImageFileLocation);
 
   // Add the new advert to the database
   db.adverts.push({
@@ -49,41 +43,68 @@ router.post('/advert', multer.single('advert_image'), (req, res) => {
     targetVersion: req.body.target_version,
     redirectUrl: req.body.redirect_url,
     created: ~~(new Date().getTime() / 1000), // eslint-disable-line no-bitwise
-    s3Url: `https://s3.amazonaws.com/${bucket}/${fileName}`,
-    fileName,
+    s3Url: `https://s3.amazonaws.com/${process.env.BUCKET}/${imageFileName}`,
+    imageFileName,
   });
 
-  fs.writeFileSync(process.env.DATABASE_PATH, JSON.stringify(db));
+  return helpers.writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, JSON.stringify(db), (databaseUploadError) => {
+    if (databaseUploadError) {
+      return res.render('advert', { error: `Unable to upload ${process.env.DATABASE_PATH}: ${databaseUploadError.stack}` });
+    }
+    return helpers.writeAndUploadFile(
+      imageFileName,
+      newImageFileLocation,
+      false,
+      (imageUploadError) => {
+        if (imageUploadError) {
+          return res.render('advert', { error: `Unable to upload ${newImageFileLocation}: ${imageUploadError.stack}` });
+        }
 
-  // Start the upload for the database file, it overwrites if it exists
-  const databaseUploader = client.uploadFile({
-    localFile: process.env.DATABASE_PATH,
-    deleteRemoved: true,
-    s3Params: {
-      ACL: 'public-read',
-      Bucket: bucket,
-      Key: 'adverts.json',
-    },
+        return res.render('advert', { success: `New advert ${req.body.advert_name} added to S3` });
+      } // eslint-disable-line comma-dangle
+    );
   });
+});
 
-  databaseUploader.on('error', error => res.render('advert', { error: `Unable to sync: ${error.stack}` }));
+// This should be a DELETE but you can't use DELETE in a HTML form :(
+router.post('/remove-advert', multer.array(), (req, res) => {
+  const db = require(process.env.DATABASE_PATH); // eslint-disable-line
 
-  return databaseUploader.on('end', () => {
-    // Start the upload for the image
-    const imageUploader = client.uploadFile({
-      localFile: newFileLocation,
-      deleteRemoved: true,
-      s3Params: {
-        ACL: 'public-read',
-        Bucket: bucket,
-        Key: fileName,
-      },
+  // Remove the advert
+  const advertToBeRemoved = db.adverts.find(advert => advert.advertName === req.body.advert_name);
+  db.adverts = db.adverts.filter(advert => advert.advertName !== req.body.advert_name);
+
+  const responseData = {
+    adverts_status: db.adverts_status,
+    adverts_status_toggled: !db.adverts_status,
+    adverts: db.adverts.reverse(),
+    show_adverts: db.adverts.length > 0,
+  };
+
+  if (!advertToBeRemoved) {
+    return res.render('index', Object.assign({}, responseData, {
+      error: 'Unable remove advert, have you clicked Delete twice very quickly?',
+    }));
+  }
+
+  return helpers.writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, JSON.stringify(db), (error) => {
+    if (error) {
+      return res.render('index', Object.assign({}, responseData, {
+        error: `Unable to upload ${process.env.DATABASE_PATH}: ${error.stack}`,
+      }));
+    }
+
+    return helpers.deleteFiles([advertToBeRemoved.imageFileName], (deleteFilesError) => {
+      if (deleteFilesError) {
+        return res.render('index', Object.assign({}, responseData, {
+          error: `Unable to delete ${req.body.advert_name} from S3: ${deleteFilesError.stack}`,
+        }));
+      }
+
+      return res.render('index', Object.assign({}, responseData, {
+        success: `${req.body.advert_name} removed`,
+      }));
     });
-
-    // Should remove entry from databse if we get an error here
-    imageUploader.on('error', error => res.render('advert', { error: `Unable to sync: ${error.stack}` }));
-
-    imageUploader.on('end', () => res.render('advert', { success: `New advert ${req.body.advert_name} added to S3` }));
   });
 });
 
