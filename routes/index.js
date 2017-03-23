@@ -9,10 +9,10 @@ router.get('/', (req, res) => {
   const db = require(process.env.DATABASE_PATH); // eslint-disable-line
 
   const responseData = {
-    adverts_status: db.adverts_status,
-    adverts_status_toggled: !db.adverts_status,
+    advertsStatus: db.advertsStatus,
+    advertsStatusToggled: !db.advertsStatus,
     adverts: db.adverts.reverse(),
-    show_adverts: db.adverts.length > 0,
+    showAdverts: db.adverts.length > 0,
   };
 
   res.render('index', responseData);

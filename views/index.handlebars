@@ -1,95 +1,53 @@
-<div class="mt-3">
-  <form action="/action" method="post" enctype="multipart/form-data" class="mt-2 mb-2">
-    <input type="hidden" name="toggle_adverts_status" value="{{adverts_status_toggled}}">
-    <button type="submit" class="btn btn-outline-primary">
-      {{#if adverts_status}}
-        Disable all adverts
-      {{else}}
-        Enable all adverts
-      {{/if}}
-    </button>
-  </form>
-  <hr>
-  <h2>Adverts</h2>
-  {{#unless show_adverts}}
-    <div class="alert alert-info" role="alert">There are no adverts in the database</div>
+<div class="">
+  <p>
+    <form action="/action" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="toggleAdvertsStatus" value="{{advertsStatusToggled}}">
+      <button class="btn waves-effect waves-light opsview" type="submit">
+        {{#if advertsStatus}}
+          Disable all adverts
+        {{else}}
+          Enable all adverts
+        {{/if}}
+      </button>
+    </form>
+  </p>
+  <h3>Adverts</h3>
+  {{#unless showAdverts}}
+    <div class="card-panel light-blue darken-3 white-text" role="alert"><b>There are no adverts in the database</b></div>
   {{/unless}}
-  <table class="table table-hover">
-    <thead>
-      <tr>
-        <th>Advert Name</th>
-        <th>Target Versions</th>
-        <th>URL</th>
-        <th>Image</th>
-        <th>Created</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{#each adverts}}
-        <tr>
-          <td>{{this.advertName}}</td>
-          <td>{{this.targetVersion}}</td>
-          <td><a href="{{this.redirectUrl}}">{{this.redirectUrl}}</a></td>
-          <td><img src="{{this.s3Url}}" width="100" alt="{{this.fileName}} image" /></td>
-          <td>{{created this.created}}</td>
-          <td>
-            <form action="/remove-advert" method="post" enctype="multipart/form-data">
-              <input type="hidden" name="advert_name" value="{{this.advertName}}">
-              <button type="submit" class="btn btn-danger">Delete</button>
-            </form>
-          </td>
-        </tr>
-      {{/each}}
-    </tbody>
-  </table>
+  {{#each adverts}}
+    <div class="card horizontal" style="max-height:250px;">
+      <div class="card-image hide-on-small-only">
+        <img src="{{this.s3Url}}" style="max-height:250px;">
+      </div>
+      <div class="card-stacked">
+        <div class="card-content">
+          <table class="responsive-table">
+            <thead>
+              <tr>
+                <th>Advert Name</th>
+                <th>Target Versions</th>
+                <th>Created</th>
+                <th>Redirect Url</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{this.name}}</td>
+                <td>{{this.targetVersion}}</td>
+                <td>{{created this.created}}</td>
+                <td><a href="{{this.redirectUrl}}">{{this.redirectUrl}}</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-action">
+          <form action="/remove-advert" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="advert_name" value="{{this.name}}">
+            <button type="submit" class="btn red accent-4">Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  {{/each}}
 </div>
-{{!-- <main>
-  {{#if success}}
-    <p class="success">{{success}}</p>
-  {{/if}}
-  {{#if error}}
-    <p class="error">{{error}}</p>
-  {{/if}}
-  <div class="actions">
-    <h1>Advert Actions</h1>
-
-  </div>
-  <div class="advert">
-    <div class="currentAdvert">
-      <h1>Current Adverts</h1>
-      <p>Hello</p>
-    </div>
-    <div class="newAdvert">
-      <h1>Add New Advert</h1>
-      <p>
-        <form action="/advert" method="post" enctype="multipart/form-data">
-          <div class="separator">
-            <label for="target_version">Ad Campaign Name:</label>
-            <input id="campaign_name" type="text" name="campaign_name" required>
-          </div>
-          <div class="separator">
-            <label for="target_version">Ad Target Version:</label>
-            <select id="target_version" name="target_version" multiple required>
-              <option selected value="5.3">5.3.0</option>
-              <option value="5.2.1">5.2.1</option>
-              <option value="5.2.0">5.2.0</option>
-              <option value="5.1.0">5.1.0</option>
-              <option value="5.0.2">5.0.2</option>
-              <option value="5.0.1">5.0.1</option>
-              <option value="5.0.0">5.0.0</option>
-              <option value="4.6.0">4.6.0</option>
-            </select>
-          </div>
-          <div class="separator">
-            <label for="advert_image">Ad Image:</label>
-            <input id="advert_image" type="file" name="advert_image" required>
-          </div>
-          <div class="separator">
-            <button type="submit">Submit</button>
-          </div>
-        </form>
-      </p>
-    </div>
-  </div>
-</main> --}}

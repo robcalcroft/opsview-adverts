@@ -39,13 +39,17 @@ router.post('/advert', multer.single('advert_image'), (req, res) => {
 
   // Add the new advert to the database
   db.adverts.push({
-    advertName: req.body.advert_name,
+    name: req.body.advert_name,
     targetVersion: req.body.target_version,
     redirectUrl: req.body.redirect_url,
     created: ~~(new Date().getTime() / 1000), // eslint-disable-line no-bitwise
     s3Url: `https://s3.amazonaws.com/${process.env.BUCKET}/${imageFileName}`,
     imageFileName,
   });
+
+  if (db.currentAdvertName === '') {
+    db.currentAdvertName = req.body.advert_name;
+  }
 
   return helpers.writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, JSON.stringify(db), (databaseUploadError) => {
     if (databaseUploadError) {
@@ -71,20 +75,24 @@ router.post('/remove-advert', multer.array(), (req, res) => {
   const db = require(process.env.DATABASE_PATH); // eslint-disable-line
 
   // Remove the advert
-  const advertToBeRemoved = db.adverts.find(advert => advert.advertName === req.body.advert_name);
-  db.adverts = db.adverts.filter(advert => advert.advertName !== req.body.advert_name);
+  const advertToBeRemoved = db.adverts.find(advert => advert.name === req.body.advert_name);
+  db.adverts = db.adverts.filter(advert => advert.name !== req.body.advert_name);
 
   const responseData = {
-    adverts_status: db.adverts_status,
-    adverts_status_toggled: !db.adverts_status,
+    advertsStatus: db.advertsStatus,
+    advertsStatusToggled: !db.advertsStatus,
     adverts: db.adverts.reverse(),
-    show_adverts: db.adverts.length > 0,
+    showAdverts: db.adverts.length > 0,
   };
 
   if (!advertToBeRemoved) {
     return res.render('index', Object.assign({}, responseData, {
       error: 'Unable remove advert, have you clicked Delete twice very quickly?',
     }));
+  }
+
+  if (db.currentAdvertName === advertToBeRemoved.name) {
+    db.currentAdvertName = (db.adverts[0] && db.adverts[0].name) || '';
   }
 
   return helpers.writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, JSON.stringify(db), (error) => {

@@ -9,16 +9,16 @@ const router = express.Router();
 
 router.post('/action', multer.array(), (req, res) => {
   // Derive the adverts status
-  const advertsStatus = req.body.toggle_adverts_status === 'true';
+  const advertsStatus = req.body.toggleAdvertsStatus === 'true';
   const db = require(process.env.DATABASE_PATH); // eslint-disable-line
 
-  db.adverts_status = advertsStatus;
+  db.advertsStatus = advertsStatus;
 
   const responseData = {
-    adverts_status: db.adverts_status,
-    adverts_status_toggled: !db.adverts_status,
+    advertsStatus: db.advertsStatus,
+    advertsStatusToggled: !db.advertsStatus,
     adverts: db.adverts.reverse(),
-    show_adverts: db.adverts.length > 0,
+    showAdverts: db.adverts.length > 0,
   };
 
   writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, JSON.stringify(db), (error) => {

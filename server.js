@@ -13,7 +13,8 @@ const helpers = require(`${process.env.PWD}/helpers.js`); // eslint-disable-line
 // Create database if it doesn't exist
 if (!fs.existsSync(process.env.DATABASE_PATH)) {
   fs.writeFileSync(process.env.DATABASE_PATH, JSON.stringify({
-    adverts_status: false,
+    advertsStatus: false,
+    currentAdvertName: '',
     adverts: [],
   }));
 }
@@ -22,7 +23,8 @@ helpers.doesFileExist('adverts.json', (doesExist) => {
   if (!doesExist) {
     console.log(`${new Date()}`, 'Adverts database not available on S3, uploading...');
     const doesExistLocally = fs.existsSync(process.env.DATABASE_PATH) ? false : JSON.stringify({
-      adverts_status: false,
+      advertsStatus: false,
+      currentAdvertName: '',
       adverts: [],
     });
     helpers.writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, doesExistLocally, (error) => {

@@ -1,1 +1,1 @@
-{"adverts_status":false,"adverts":[]}
+{"advertsStatus":true,"currentAdvertName":"Push Notifications","adverts":[{"name":"Push Notifications","targetVersion":"all","redirectUrl":"https://example.com","created":1490280198,"s3Url":"https://s3.amazonaws.com/opsview-adverts-testing/bW9iaWxlX2FkMi5wbmctMTQ5MDI4MDE5ODM1OQ==.png","imageFileName":"bW9iaWxlX2FkMi5wbmctMTQ5MDI4MDE5ODM1OQ==.png"}]}
