@@ -6,6 +6,7 @@ const fs = require('fs');
 const indexRoutes = require('./routes/index');
 const advertRoutes = require('./routes/advert');
 const actionsRoutes = require('./routes/actions');
+const developersRoutes = require('./routes/developers');
 
 const app = express();
 const helpers = require(`${process.env.PWD}/helpers.js`); // eslint-disable-line
@@ -54,7 +55,7 @@ app.use('/public', express.static('public'));
 app.use(morgan('combined'));
 
 // Inject routes
-app.use('/', indexRoutes, advertRoutes, actionsRoutes);
+app.use('/', indexRoutes, advertRoutes, actionsRoutes, developersRoutes);
 
 // Add catching routes
 app.get('*', (req, res) => res.render('404'));

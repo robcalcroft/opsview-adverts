@@ -1,5 +1,22 @@
-<div class="">
-  <p>
+<br>
+<div class="card">
+  <div class="card-content">
+    <span class="card-title">Welcome</span>
+    <div class="row">
+      <div class="col s4">
+        Opsview Adverts control panel allows access to add and delete adverts in the rotation used on our web UI, mobile devices and other areas.
+      </div>
+      <div class="col s4">
+        Adverts are cycled every 48 hours and served from S3.
+      </div>
+      <div class="col s4">
+        The current adverts in rotation are shown below with the advert currently visible to our customers highlighted.
+      </div>
+    </div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-action">
     <form action="/action" method="post" enctype="multipart/form-data">
       <input type="hidden" name="toggleAdvertsStatus" value="{{advertsStatusToggled}}">
       <button class="btn waves-effect waves-light opsview" type="submit">
@@ -10,44 +27,46 @@
         {{/if}}
       </button>
     </form>
-  </p>
-  <h3>Adverts</h3>
-  {{#unless showAdverts}}
-    <div class="card-panel light-blue darken-3 white-text" role="alert"><b>There are no adverts in the database</b></div>
-  {{/unless}}
-  {{#each adverts}}
-    <div class="card horizontal" style="max-height:250px;">
-      <div class="card-image hide-on-small-only">
-        <img src="{{this.s3Url}}" style="max-height:250px;">
+  </div>
+</div>
+<h5>Adverts</h5>
+{{#unless showAdverts}}
+  <div class="card-panel light-blue darken-3 white-text" role="alert"><b>There are no adverts in the database</b></div>
+{{/unless}}
+{{#each adverts}}
+  <div class="card horizontal">
+    <div class="card-image hide-on-med-and-down">
+      <img src="{{this.s3Url}}" style="width: 200px;">
+    </div>
+    <div class="card-stacked">
+      <div class="card-content">
+        <table class="responsive-table">
+          <thead>
+            <tr>
+              <th>Advert Name</th>
+              <th>Target Versions</th>
+              <th>Created</th>
+              <th>Redirect Url</th>
+              <th class="hide-on-large-only">S3 Url</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{this.name}}</td>
+              <td>{{this.targetVersion}}</td>
+              <td>{{created this.created}}</td>
+              <td><a href="{{this.redirectUrl}}">{{this.redirectUrl}}</a></td>
+              <td class="hide-on-large-only"><a href="{{this.s3Url}}">{{this.s3Url}}</a></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div class="card-stacked">
-        <div class="card-content">
-          <table class="responsive-table">
-            <thead>
-              <tr>
-                <th>Advert Name</th>
-                <th>Target Versions</th>
-                <th>Created</th>
-                <th>Redirect Url</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>{{this.name}}</td>
-                <td>{{this.targetVersion}}</td>
-                <td>{{created this.created}}</td>
-                <td><a href="{{this.redirectUrl}}">{{this.redirectUrl}}</a></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="card-action">
-          <form action="/remove-advert" method="post" enctype="multipart/form-data">
-            <input type="hidden" name="advert_name" value="{{this.name}}">
-            <button type="submit" class="btn red accent-4">Delete</button>
-          </form>
-        </div>
+      <div class="card-action">
+        <form action="/remove-advert" method="post" enctype="multipart/form-data">
+          <input type="hidden" name="advert_name" value="{{this.name}}">
+          <button type="submit" class="btn red accent-4">Delete</button>
+        </form>
       </div>
     </div>
-  {{/each}}
-</div>
+  </div>
+{{/each}}
