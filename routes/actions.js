@@ -16,6 +16,7 @@ router.post('/action', multer.array(), (req, res) => {
 
   const responseData = {
     advertsStatus: db.advertsStatus,
+    currentAdvert: db.adverts.find(ad => ad.name === db.currentAdvertName),
     advertsStatusToggled: !db.advertsStatus,
     adverts: db.adverts.reverse(),
     showAdverts: db.adverts.length > 0,

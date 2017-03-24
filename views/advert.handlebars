@@ -1,6 +1,7 @@
 <div class="row">
   <h3>Add New Advert</h3>
   <form action="/advert" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="cmd" value="add">
     <div class="input-field">
       <label>Advert Name</label>
       <input class="form-control" placeholder="An identifier for this advert" type="text" name="advert_name" required />
@@ -22,6 +23,14 @@
         <option value="4.6.0">4.6.0</option>
       </select>
       <label>Target Version</label>
+    </div>
+    <div class="input-field">
+      <select name="target_size" required>
+        <option value="640x960">Mobile (640x960)</option>
+        <option value="500x300">Desktop (500x300)</option>
+        <option value="600x200">Desktop (600x200)</option>
+      </select>
+      <label>Target Size</label>
     </div>
     <div class="file-field input-field">
       <div class="btn light-blue darken-3">
