@@ -10,7 +10,9 @@ router.get('/', (req, res) => {
 
   const responseData = {
     advertsStatus: db.advertsStatus,
-    currentAdvert: db.adverts.find(ad => ad.name === db.currentAdvertName),
+    currentAdvertMobile: db.adverts.find(ad => ad.name === db.currentAdvertMobile),
+    currentAdvertDesktop1: db.adverts.find(ad => ad.name === db.currentAdvertDesktop1),
+    currentAdvertDesktop2: db.adverts.find(ad => ad.name === db.currentAdvertDesktop2),
     advertsStatusToggled: !db.advertsStatus,
     adverts: db.adverts.reverse(),
     showAdverts: db.adverts.length > 0,

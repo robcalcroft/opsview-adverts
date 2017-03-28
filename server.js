@@ -11,21 +11,14 @@ const developersRoutes = require('./routes/developers');
 const app = express();
 const helpers = require(`${process.env.PWD}/helpers.js`); // eslint-disable-line
 
-// Create database if it doesn't exist
-if (!fs.existsSync(process.env.DATABASE_PATH)) {
-  fs.writeFileSync(process.env.DATABASE_PATH, JSON.stringify({
-    advertsStatus: false,
-    currentAdvertName: '',
-    adverts: [],
-  }));
-}
-
 helpers.doesFileExist('adverts.json', (doesExist) => {
   if (!doesExist) {
     console.log(`${new Date()}`, 'Adverts database not available on S3, uploading...');
     const doesExistLocally = fs.existsSync(process.env.DATABASE_PATH) ? false : JSON.stringify({
       advertsStatus: false,
-      currentAdvertName: '',
+      currentAdvertMobile: '',
+      currentAdvertDesktop1: '',
+      currentAdvertDesktop2: '',
       adverts: [],
     });
     helpers.writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, doesExistLocally, (error) => {
@@ -45,6 +38,7 @@ const handlebars = expressHandlebars.create({
   defaultLayout: 'main',
   helpers: {
     created: time => moment.unix(time).fromNow(),
+    ternary: (condition, outcome1, outcome2) => (condition ? outcome1 : outcome2),
   },
 });
 

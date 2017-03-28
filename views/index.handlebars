@@ -28,8 +28,14 @@
                 <span data-badge-caption="" class="badge new red accent-4">Off</span>Adverts Status
               {{/if}}
           </div>
-          <a class="collection-item opsview-text" target="_blank" href={{currentAdvert.s3Url}}>
-            <span data-badge-caption="" class="badge new opsview">{{currentAdvert.name}}</span>Current Showing Ad
+          <a class="collection-item opsview-text" target="_blank" href={{currentAdvertMobile.s3Url}}>
+            <span data-badge-caption="" class="badge new opsview">{{ternary currentAdvertMobile.name currentAdvertMobile.name '-'}}</span>Current Showing Mobile Ad
+          </a>
+          <a class="collection-item opsview-text" target="_blank" href={{currentAdvertDesktop1.s3Url}}>
+            <span data-badge-caption="" class="badge new opsview">{{ternary currentAdvertDesktop1.name currentAdvertDesktop1.name '-'}}</span>Current Showing Desktop 1 Ad
+          </a>
+          <a class="collection-item opsview-text" target="_blank" href={{currentAdvertDesktop2.s3Url}}>
+            <span data-badge-caption="" class="badge new opsview">{{ternary currentAdvertDesktop2.name currentAdvertDesktop2.name '-'}}</span>Current Showing Desktop 2 Ad
           </a>
         </div>
       </div>
@@ -69,6 +75,7 @@
             <tr>
               <th>Advert Name</th>
               <th>Target Versions</th>
+              <th>Target Size</th>
               <th>Created</th>
               <th>Redirect Url</th>
               <th class="hide-on-large-only">S3 Url</th>
@@ -78,6 +85,7 @@
             <tr>
               <td>{{this.name}}</td>
               <td>{{this.targetVersion}}</td>
+              <td>{{this.targetSize}}</td>
               <td>{{created this.created}}</td>
               <td><a href="{{this.redirectUrl}}">{{this.redirectUrl}}</a></td>
               <td class="hide-on-large-only"><a href="{{this.s3Url}}">{{this.s3Url}}</a></td>

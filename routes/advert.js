@@ -19,7 +19,9 @@ const removeAdvert = (req, res) => {
 
   const responseData = {
     advertsStatus: db.advertsStatus,
-    currentAdvert: db.adverts.find(ad => ad.name === db.currentAdvertName),
+    currentAdvertMobile: db.adverts.find(ad => ad.name === db.currentAdvertMobile),
+    currentAdvertDesktop1: db.adverts.find(ad => ad.name === db.currentAdvertDesktop1),
+    currentAdvertDesktop2: db.adverts.find(ad => ad.name === db.currentAdvertDesktop2),
     advertsStatusToggled: !db.advertsStatus,
     adverts: db.adverts.reverse(),
     showAdverts: db.adverts.length > 0,
@@ -31,9 +33,24 @@ const removeAdvert = (req, res) => {
     }));
   }
 
-  if (db.currentAdvertName === advertToBeRemoved.name) {
-    db.currentAdvertName = (db.adverts[0] && db.adverts[0].name) || '';
-    responseData.currentAdvert = db.adverts.find(ad => ad.name === db.currentAdvertName);
+  if (db.currentAdvertMobile === advertToBeRemoved.name) {
+    const mobileAdverts = db.adverts.filter(ad => ad.targetSize === '640x960');
+    db.currentAdvertMobile = (mobileAdverts[0] && mobileAdverts[0].name) || '';
+    responseData.currentAdvertMobile = db.adverts.find(ad => ad.name === db.currentAdvertMobile);
+  }
+  if (db.currentAdvertDesktop1 === advertToBeRemoved.name) {
+    const desktop1Adverts = db.adverts.filter(ad => ad.targetSize === '500x300');
+    db.currentAdvertDesktop1 = (desktop1Adverts[0] && desktop1Adverts[0].name) || '';
+    responseData.currentAdvertDesktop1 = (
+      db.adverts.find(ad => ad.name === db.currentAdvertDesktop1)
+    );
+  }
+  if (db.currentAdvertDesktop2 === advertToBeRemoved.name) {
+    const desktop2Adverts = db.adverts.filter(ad => ad.targetSize === '600x200');
+    db.currentAdvertDesktop2 = (desktop2Adverts[0] && desktop2Adverts[0].name) || '';
+    responseData.currentAdvertDesktop2 = (
+      db.adverts.find(ad => ad.name === db.currentAdvertDesktop2)
+    );
   }
 
   return helpers.writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, JSON.stringify(db), (error) => {
@@ -90,6 +107,7 @@ const addAdvert = (req, res) => {
   db.adverts.push({
     name: req.body.advert_name,
     targetVersion: req.body.target_version,
+    targetSize: req.body.target_size,
     redirectUrl: req.body.redirect_url,
     created: ~~(new Date().getTime() / 1000), // eslint-disable-line no-bitwise
     s3Url: `https://s3.amazonaws.com/${process.env.BUCKET}/${imageFileName}`,
@@ -97,8 +115,14 @@ const addAdvert = (req, res) => {
     imageFileName,
   });
 
-  if (db.currentAdvertName === '') {
-    db.currentAdvertName = req.body.advert_name;
+  if (req.body.target_size === '640x960' && db.currentAdvertMobile === '') {
+    db.currentAdvertMobile = req.body.advert_name;
+  }
+  if (req.body.target_size === '500x300' && db.currentAdvertDesktop1 === '') {
+    db.currentAdvertDesktop1 = req.body.advert_name;
+  }
+  if (req.body.target_size === '600x200' && db.currentAdvertDesktop2 === '') {
+    db.currentAdvertDesktop2 = req.body.advert_name;
   }
 
   return helpers.writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, JSON.stringify(db), (databaseUploadError) => {
@@ -125,7 +149,9 @@ const setActiveAdvert = (req, res) => {
 
   const responseData = {
     advertsStatus: db.advertsStatus,
-    currentAdvert: db.adverts.find(ad => ad.name === db.currentAdvertName),
+    currentAdvertMobile: db.adverts.find(ad => ad.name === db.currentAdvertMobile),
+    currentAdvertDesktop1: db.adverts.find(ad => ad.name === db.currentAdvertDesktop1),
+    currentAdvertDesktop2: db.adverts.find(ad => ad.name === db.currentAdvertDesktop2),
     advertsStatusToggled: !db.advertsStatus,
     adverts: db.adverts.reverse(),
     showAdverts: db.adverts.length > 0,
@@ -137,7 +163,23 @@ const setActiveAdvert = (req, res) => {
     }));
   }
 
-  db.currentAdvertName = req.body.advert_name;
+  const advertToSet = db.adverts.find(ad => ad.name === req.body.advert_name);
+
+  if (!advertToSet) {
+    return res.render('index', Object.assign({}, responseData, {
+      error: 'No advert found',
+    }));
+  }
+
+  if (advertToSet.targetVersion === '640x960') {
+    db.currentAdvertMobile = req.body.advert_name;
+  }
+  if (advertToSet.targetVersion === '500x300') {
+    db.currentAdvertDesktop1 = req.body.advert_name;
+  }
+  if (advertToSet.targetVersion === '600x200') {
+    db.currentAdvertDesktop2 = req.body.advert_name;
+  }
 
   return helpers.writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, JSON.stringify(db), (error) => {
     if (error) {
