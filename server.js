@@ -3,10 +3,13 @@ const morgan = require('morgan');
 const moment = require('moment');
 const expressHandlebars = require('express-handlebars');
 const fs = require('fs');
+const dotenv = require('dotenv');
 const indexRoutes = require('./routes/index');
 const advertRoutes = require('./routes/advert');
 const actionsRoutes = require('./routes/actions');
 const developersRoutes = require('./routes/developers');
+
+dotenv.load();
 
 const app = express();
 const helpers = require(`${process.env.PWD}/helpers.js`); // eslint-disable-line
