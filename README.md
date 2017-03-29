@@ -41,7 +41,11 @@ Clients should make a request to `GET https://s3.amazonaws.com/opsview-adverts/a
 {
   // True for global enable, false for global disable
   advertsStatus: Boolean,
-  currentAdvertName: '',
+  // There are 3 types of advert for different uses, use these to lookup adverts in the
+  // adverts array to get the rest of the ad data
+  currentAdvertMobile: '',
+  currentAdvertDesktop1: '',
+  currentAdvertDesktop2: '',
   // This could be empty, even if advertsStatus is true
   adverts: [
     {
@@ -50,6 +54,8 @@ Clients should make a request to `GET https://s3.amazonaws.com/opsview-adverts/a
       // The versions of Opsview to target this advert to
       // ['5.3.0', '5.2.1'] | 'all'
       targetVersion: Array | String,
+      // A string that is NumberxNumber where the numbers are the X and Y size of the image
+      targetSize: String,
       // The URL to send users to when they interact with the advert
       redirectUrl: String,
       // A unix timestamp of when the advert was added

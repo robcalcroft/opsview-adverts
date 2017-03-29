@@ -1,116 +1,20 @@
-<h1 id="opsviewadverts">opsview-adverts</h1>
+<h3>Documentation</h3>
+<p class="grey-text">Documentation to help setup a client to use this adverts solution</p>
+<p>This solution uses a JSON file hosted on S3 that is downloaded by each client and parsed in order to decide if and how to show the adverts for their client</p>
+<hr>
+<p>To start, make a request to <code>GET https://s3.amazonaws.com/opsview-adverts/adverts.json</code> to get the JSON config data</p>
+<p>Next parse that data as an object or hash; the embed below will show you what the structure of the JSON is</p>
+<iframe src="https://pastebin.com/embed_iframe/PWwZ8hnD" style="border:none;width:100%;height:650px;"></iframe>
+<p>The following pseudo code should be used to determine if and how to show adverts:</p>
+<pre>
+  <code>
+    IF advertDb.advertsStatus == true AND advertDb.adverts.length != 0
+    THEN
+      // This is line client specific
+      currentAdName = currentAdvertMobile || currentAdvertDesktop1 || currentAdvertDesktop2
 
-<blockquote>
-  <p>A solution to manage adverts for Opsview</p>
-</blockquote>
-
-<h4 id="lifecycle">Lifecycle</h4>
-
-<ol>
-<li>New advert is added via the web interface which is then uploaded to S3 along with the JSON configuration file.</li>
-
-<li>A client will read the JSON file hosted on S3 and based on the current advert rotation be able to derive a link from S3 which will display the link to the image, along with a <code>redirectUrl</code> which can be used by the client to direct the user when they interact with the advert.</li>
-
-<li>Every 48 hours the <code>rotator.js</code> script is run and updates the current advert with the next one in the list in a cyclic fashion</li>
-
-<li>An advert is no longer needed and is deleted using the web ui, the database is updated with these changes and the current advert reset back to the first advert in the list then synced back to S3</li>
-</ol>
-
-<h4 id="whyuseajsonfileinsteadofastatics3url">Why use a JSON file instead of a static S3 URL?</h4>
-
-<ul>
-<li>Caching issues are common, especially when dealing with international users who could be served an out of date advert. Instead this solution uses a base64 encoded unique filename to mitigate this issue.</li>
-
-<li>The JSON file allows us to add conditions to adverts being shown, for example showing certain adverts for certain device types, Opsview Monitor versions or being able to globally control whether adverts are shown, without a crude solution of removing the assets.</li>
-</ul>
-
-<h2 id="install">Install</h2>
-
-<ol>
-<li>Clone this repo</li>
-
-<li>With Node.js (>=6.9.4), npm and <a href="https://yarnpkg.com/lang/en/">Yarn</a> installed, run <code>yarn</code></li>
-
-<li>Make a copy of <code>.env-sample</code> called <code>.env</code> and add your Amazon AWS credentials in, the credentials must be able to read and write from S3</li>
-
-<li>Run <code>mkdir $PWD/tmp</code> to create the temporary directory needed for file uploads</li>
-</ol>
-
-<h2 id="usage">Usage</h2>
-
-<h3 id="server">Server</h3>
-
-<h4 id="development">Development</h4>
-
-<pre><code>DATABASE_PATH=$PWD/adverts/adverts.json PORT=8000 yarn start-server
-</code></pre>
-
-<h4 id="production">Production</h4>
-
-<p>For production a robust Node.js process management solution should be used; <a href="https://github.com/Unitech/pm2">PM2</a> is a good start. Then something like NGINX can be used to proxy the requests to <code>8000</code> or whatever port is used.</p>
-
-<pre><code>DATABASE_PATH=$PWD/adverts/adverts.json PORT=8000 pm2 start server.js --name opsview-adverts-server --no-vizion
-</code></pre>
-
-<blockquote>
-  <p>DATABASE_PATH can also be specified in the <code>.env</code> file</p>
-</blockquote>
-
-<h3 id="client">Client</h3>
-
-<p>Clients should make a request to <code>GET https://s3.amazonaws.com/opsview-adverts/adverts.json</code> to retrieve information about adverts.</p>
-
-<h4 id="api">API</h4>
-
-<pre><code>{
-  // True for global enable, false for global disable
-  advertsStatus: Boolean,
-  currentAdvertName: '',
-  // This could be empty, even if advertsStatus is true
-  adverts: [
-    {
-      // The name of the advert campaign
-      name: String,
-      // The versions of Opsview to target this advert to
-      // ['5.3.0', '5.2.1'] | 'all'
-      targetVersion: Array | String,
-      // The URL to send users to when they interact with the advert
-      redirectUrl: String,
-      // A unix timestamp of when the advert was added
-      created: Number,
-      // The direct URL to load as an image on the client
-      s3Url: String,
-      // The name of the advert image file
-      imageFileName: String,
-    }
-  ]
-}
-</code></pre>
-
-<h3 id="rotator">Rotator</h3>
-
-<p>The rotator read the database in every 48 hours, attempts to increment the current advert (it uses the first in the list if it cant find the next one or an empty string for if there are no adverts) then syncs the database back to S3.</p>
-
-<h4 id="development-1">Development</h4>
-
-<pre><code>DATABASE_PATH=$PWD/adverts/adverts.json yarn start-rotator
-</code></pre>
-
-<h4 id="production-1">Production</h4>
-
-<p>For production a robust Node.js process management solution should be used; <a href="https://github.com/Unitech/pm2">PM2</a> is a good start.</p>
-
-<pre><code>DATABASE_PATH=$PWD/adverts/adverts.json pm2 start rotator.js --name opsview-adverts-rotator --no-vizion
-</code></pre>
-
-<h2 id="development-2">Development</h2>
-
-<ul>
-<li>Any changes to the code should follow <a href="https://github.com/airbnb/javascript">Airbnb's JavaScript styleguide</a>, this is enforced with ESLint</li>
-
-<li>Not using Babel so if any ES7+ features don't work in Node use // eslint-disable-line</li>
-
-<li>Before commiting, the code should be linted with <code>yarn run lint</code> and any errors corrected</li>
-
-<li>A part of development is ensuring our dependencies are up to date, this can be done with <code>yarn update-interactive</code></li>
-</ul>
+      curentAd = advertDb.adverts FIND WHERE advert.name == currentAdName
+      showAdvert(currentAd.s3Url, currentAd.redirectUrl)
+    ELSE exit
+  </code>
+</pre>
