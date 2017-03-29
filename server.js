@@ -4,7 +4,7 @@ const moment = require('moment');
 const expressHandlebars = require('express-handlebars');
 const fs = require('fs');
 const dotenv = require('dotenv');
-const basicAuth = require('express-basic-auth');
+const auth = require('http-auth');
 const indexRoutes = require('./routes/index');
 const advertRoutes = require('./routes/advert');
 const actionsRoutes = require('./routes/actions');
@@ -47,18 +47,15 @@ const handlebars = expressHandlebars.create({
   },
 });
 
-if (!fs.existsSync('./users.json')) {
-  throw new Error('No users.json file found');
-}
-
 // Setup
 app.engine('handlebars', handlebars.engine);
 app.set('view engine', 'handlebars');
 app.use('/public', express.static('public'));
 app.use(morgan('combined'));
-app.use(basicAuth({
-  users: require('./users.json'), // eslint-disable-line global-require
-}));
+app.use(auth.connect(auth.basic({
+  realm: 'opsview-adverts',
+  file: `${process.env.PWD}/users.htpasswd`,
+})));
 
 // Inject routes
 app.use('/', indexRoutes, advertRoutes, actionsRoutes, developersRoutes);
