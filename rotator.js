@@ -5,8 +5,8 @@ const helpers = require('./helpers.js');
 
 dotenv.load();
 
-// const every48Hours = '0 0 0 */2 * *';
-const everySecond = '*/6 * * * * *';
+const every48Hours = '0 0 0 */2 * *';
+// const everySecond = '*/6 * * * * *';
 
 winston.add(winston.transports.File, {
   filename: 'rotator.log',
@@ -14,7 +14,7 @@ winston.add(winston.transports.File, {
 });
 winston.info('Opsview Adverts rotator online ✅');
 
-new Cron(everySecond, () => { // eslint-disable-line no-new
+new Cron(every48Hours, () => { // eslint-disable-line no-new
   const db = require(process.env.DATABASE_PATH); // eslint-disable-line
 
   // If there are no adverts in the database or just one then we don't need to rotate
