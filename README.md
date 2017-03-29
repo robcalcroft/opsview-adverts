@@ -28,7 +28,7 @@ DATABASE_PATH=$PWD/adverts/adverts.json PORT=8000 yarn start-server
 #### Production
 For production a robust Node.js process management solution should be used; [PM2](https://github.com/Unitech/pm2) is a good start. Then something like NGINX can be used to proxy the requests to `8000` or whatever port is used.
 ```
-DATABASE_PATH=$PWD/adverts/adverts.json PORT=8000 pm2 start server.js --name opsview-adverts-server --no-vizion
+NODE_ENV=production DATABASE_PATH=$PWD/adverts/adverts.json PORT=8000 pm2 start server.js --name opsview-adverts-server --no-vizion
 ```
 
 > DATABASE_PATH can also be specified in the `.env` file
