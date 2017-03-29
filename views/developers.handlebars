@@ -11,10 +11,28 @@
     IF advertDb.advertsStatus == true AND advertDb.adverts.length != 0
     THEN
       // This is line client specific
-      currentAdName = currentAdvertMobile || currentAdvertDesktop1 || currentAdvertDesktop2
+      currentAdName = 'currentAdvertMobile' || 'currentAdvertDesktop1' || 'currentAdvertDesktop2'
 
       curentAd = advertDb.adverts FIND WHERE advert.name == currentAdName
+
+      // Check that there is an ad available to show to the user
+      IF currentAd == undefined
+      THEN
+        IF advertDB.adverts[0]
+        THEN
+          currentAd = advertDB.adverts[0]
+        ELSE
+          exit
+
+      // Check the target version of the ad matches the version that the client is using
+      IF currentAd.targetVersion.indexOf('all') == -1
+      THEN
+        IF currentAd.targetVersion.indexOf(CLIENT_OPSVIEW_VERSION) == -1
+        THEN
+          exit
+
       showAdvert(currentAd.s3Url, currentAd.redirectUrl)
-    ELSE exit
+    ELSE
+      exit
   </code>
 </pre>
