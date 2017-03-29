@@ -16,7 +16,7 @@
 1. Clone this repo
 2. With Node.js (>=6.9.4), npm and [Yarn](https://yarnpkg.com/lang/en/) installed, run `yarn`
 3. Make a copy of `.env-sample` called `.env` and add your Amazon AWS credentials in, the credentials must be able to read and write from S3
-4. Run `mkdir $PWD/tmp` to create the temporary directory needed for file uploads
+4. Run `mkdir $PWD/adverts` to create the directory needed for file uploads
 
 ## Usage
 ### Server
