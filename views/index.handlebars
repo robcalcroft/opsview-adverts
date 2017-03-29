@@ -45,7 +45,7 @@
     <div class="card">
       <div class="card-content">
         <span class="card-title">Actions</span>
-        <form action="/action" method="post" enctype="multipart/form-data">
+        <form action="../action" method="post" enctype="multipart/form-data">
           <input type="hidden" name="toggleAdvertsStatus" value="{{advertsStatusToggled}}">
           <button class="btn waves-effect waves-light opsview" type="submit">
             {{#if advertsStatus}}
@@ -94,12 +94,12 @@
         </table>
       </div>
       <div class="card-action">
-        <form action="/advert" method="post" enctype="multipart/form-data" style="display:inline;">
+        <form action="../advert" method="post" enctype="multipart/form-data" style="display:inline;">
           <input type="hidden" name="cmd" value="change">
           <input type="hidden" name="advert_name" value="{{this.name}}">
           <button type="submit" class="btn opsview">Set As Current Advert</button>
         </form>
-        <form action="/advert" method="post" enctype="multipart/form-data" style="display:inline;">
+        <form action="../advert" method="post" enctype="multipart/form-data" style="display:inline;">
           <input type="hidden" name="cmd" value="remove">
           <input type="hidden" name="advert_name" value="{{this.name}}">
           <button type="submit" class="btn red accent-4">Delete</button>

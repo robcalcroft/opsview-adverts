@@ -42,6 +42,7 @@ const handlebars = expressHandlebars.create({
   helpers: {
     created: time => moment.unix(time).fromNow(),
     ternary: (condition, outcome1, outcome2) => (condition ? outcome1 : outcome2),
+    getBaseUri: () => process.env.BASE_URI,
   },
 });
 
