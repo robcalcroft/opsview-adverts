@@ -11,7 +11,7 @@
     IF advertDb.advertsStatus == true AND advertDb.adverts.length != 0
     THEN
       // This is line client specific
-      currentAdName = 'currentAdvertMobile' || 'currentAdvertDesktop1' || 'currentAdvertDesktop2'
+      currentAdName = advertsDb['currentAdvertMobile' || 'currentAdvertDesktop1' || 'currentAdvertDesktop2']
 
       curentAd = advertDb.adverts FIND WHERE advert.name == currentAdName
 
