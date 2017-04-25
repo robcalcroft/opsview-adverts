@@ -3,6 +3,8 @@ const fs = require('fs');
 const dotenv = require('dotenv');
 const multer = require('multer')({ dest: 'tmp/' });
 
+const log = console.log;
+
 dotenv.load();
 
 const helpers = require(`${process.env.PWD}/helpers.js`); // eslint-disable-line
@@ -12,6 +14,8 @@ router.get('/advert', (req, res) => res.render('advert'));
 
 const removeAdvert = (req, res) => {
   const db = require(process.env.DATABASE_PATH); // eslint-disable-line
+  let legacyFileName = false;
+  let advertName = '';
 
   // Remove the advert
   const advertToBeRemoved = db.adverts.find(advert => advert.name === req.body.advert_name);
@@ -44,6 +48,8 @@ const removeAdvert = (req, res) => {
     responseData.currentAdvertDesktop1 = (
       db.adverts.find(ad => ad.name === db.currentAdvertDesktop1)
     );
+    advertName = 'currentAdvertDesktop1';
+    legacyFileName = 'opsview-ad-login.png';
   }
   if (db.currentAdvertDesktop2 === advertToBeRemoved.name) {
     const desktop2Adverts = db.adverts.filter(ad => ad.targetSize === '600x200');
@@ -51,6 +57,8 @@ const removeAdvert = (req, res) => {
     responseData.currentAdvertDesktop2 = (
       db.adverts.find(ad => ad.name === db.currentAdvertDesktop2)
     );
+    advertName = 'currentAdvertDesktop2';
+    legacyFileName = 'opsview-ad-reload.png';
   }
 
   return helpers.writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, JSON.stringify(db), (error) => {
@@ -60,26 +68,78 @@ const removeAdvert = (req, res) => {
       }));
     }
 
-    return helpers.deleteFiles([advertToBeRemoved.imageFileName], (deleteFilesError) => {
-      if (deleteFilesError) {
+    const deleteFiles = (files) => {
+      helpers.deleteFiles([advertToBeRemoved.imageFileName, ...files], (deleteFilesError) => {
+        if (deleteFilesError) {
+          return res.render('index', Object.assign({}, responseData, {
+            error: `Unable to delete ${req.body.advert_name} from S3: ${deleteFilesError.stack}`,
+          }));
+        }
+
         return res.render('index', Object.assign({}, responseData, {
-          error: `Unable to delete ${req.body.advert_name} from S3: ${deleteFilesError.stack}`,
+          success: `${req.body.advert_name} removed`,
         }));
+      });
+    };
+
+    if (legacyFileName) {
+      log('- Legacy item affected');
+      if (responseData[advertName] === '' || responseData[advertName] === undefined) {
+        // Current advert empty which means there are no ads to use so we delete the legacy ad
+        log('- No ads; wiping the legacy ad');
+        return deleteFiles([legacyFileName]);
+      }
+      log('- Updating the legacy ad with the new current ad');
+
+      if (helpers.isVersionAbove53(responseData[advertName].targetVersion)) {
+        const desktopAdverts = responseData.adverts.filter(
+          ad => (
+            helpers.isVersionAbove53(ad.targetVersion) &&
+            ad.targetSize === advertToBeRemoved.targetSize
+          ) // eslint-disable-line comma-dangle
+        );
+        const imageName = (desktopAdverts[0] && desktopAdverts[0].imageFileName) || false;
+
+        if (imageName) {
+          return helpers.copy(imageName, legacyFileName, (copyError) => {
+            if (copyError) {
+              log('- Error copying ad');
+              return res.render('index', Object.assign({}, responseData, {
+                error: `Unable to copy new ad to legacy system ${copyError.stack}`,
+              }));
+            }
+            log('- Legacy ad updated; deleting old ad from S3');
+            return deleteFiles([]);
+          });
+        }
+        return deleteFiles([]);
       }
 
-      return res.render('index', Object.assign({}, responseData, {
-        success: `${req.body.advert_name} removed`,
-      }));
-    });
+      return helpers.copy(responseData[advertName].imageFileName, legacyFileName, (copyError) => {
+        if (copyError) {
+          log('- Error copying ad');
+          return res.render('index', Object.assign({}, responseData, {
+            error: `Unable to copy new ad to legacy system ${copyError.stack}`,
+          }));
+        }
+        log('- Legacy ad updated; deleting old ad from S3');
+        return deleteFiles([]);
+      });
+    }
+    log('- No legacy items to delete');
+    return deleteFiles([]);
   });
 };
 
 const addAdvert = (req, res) => {
+  log('- Adding advert');
   const db = require(process.env.DATABASE_PATH); // eslint-disable-line
   const oneMb = 1000000;
+  let legacyFileName = false;
 
   // Check the uploaded image is less than 2mb
   if (req.file.size > (oneMb * 2)) {
+    log('- Advert too big');
     return res.render('advert', {
       error: `Uploaded file was ${(req.file.size / oneMb).toFixed(1)}mb; it must be less than 2mb`,
     });
@@ -87,6 +147,7 @@ const addAdvert = (req, res) => {
 
   // Check the uploaded image is a PNG or JPEG
   if (req.file.mimetype !== 'image/png' && req.file.mimetype !== 'image/jpeg') {
+    log('- Incorrect mime type');
     return res.render('advert', {
       error: 'Uploaded file must be a PNG or a JPEG',
     });
@@ -120,13 +181,16 @@ const addAdvert = (req, res) => {
   }
   if (req.body.target_size === '500x300' && db.currentAdvertDesktop1 === '') {
     db.currentAdvertDesktop1 = req.body.advert_name;
+    legacyFileName = 'opsview-ad-login.png';
   }
   if (req.body.target_size === '600x200' && db.currentAdvertDesktop2 === '') {
     db.currentAdvertDesktop2 = req.body.advert_name;
+    legacyFileName = 'opsview-ad-reload.png';
   }
 
   return helpers.writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, JSON.stringify(db), (databaseUploadError) => {
     if (databaseUploadError) {
+      log('- Error uploading database');
       return res.render('advert', { error: `Unable to upload ${process.env.DATABASE_PATH}: ${databaseUploadError.stack}` });
     }
     return helpers.writeAndUploadFile(
@@ -135,9 +199,21 @@ const addAdvert = (req, res) => {
       false,
       (imageUploadError) => {
         if (imageUploadError) {
+          log('- Error uploading image');
           return res.render('advert', { error: `Unable to upload ${newImageFileLocation}: ${imageUploadError.stack}` });
         }
-
+        log('- Legacy file name', legacyFileName);
+        if (legacyFileName && !helpers.isVersionAbove53(req.body.target_version)) {
+          return helpers.copy(imageFileName, legacyFileName, (error) => {
+            if (error) {
+              log('- Error unable to make a copy of the original image');
+              res.render('advert', { error: `Unable to make a copy for legacy purposes, this can be done manually ${error.stack}` });
+            }
+            log('- Legacy image created');
+            return res.render('advert', { success: `New advert ${req.body.advert_name} added to S3` });
+          });
+        }
+        log('- No legacy image to create');
         return res.render('advert', { success: `New advert ${req.body.advert_name} added to S3` });
       } // eslint-disable-line comma-dangle
     );
@@ -146,6 +222,7 @@ const addAdvert = (req, res) => {
 
 const setActiveAdvert = (req, res) => {
   const db = require(process.env.DATABASE_PATH); // eslint-disable-line
+  let targetSizeName;
 
   const responseData = {
     advertsStatus: db.advertsStatus,
@@ -171,29 +248,44 @@ const setActiveAdvert = (req, res) => {
     }));
   }
 
-  if (advertToSet.targetVersion === '640x960') {
+  if (advertToSet.targetSize === '640x960') {
     db.currentAdvertMobile = req.body.advert_name;
   }
-  if (advertToSet.targetVersion === '500x300') {
+  if (advertToSet.targetSize === '500x300') {
+    targetSizeName = 'opsview-ad-login.png';
     db.currentAdvertDesktop1 = req.body.advert_name;
   }
-  if (advertToSet.targetVersion === '600x200') {
+  if (advertToSet.targetSize === '600x200') {
+    targetSizeName = 'opsview-ad-reload.png';
     db.currentAdvertDesktop2 = req.body.advert_name;
   }
 
-  return helpers.writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, JSON.stringify(db), (error) => {
-    if (error) {
+  const finish = (copyError) => {
+    if (copyError) {
       return res.render('index', Object.assign({}, responseData, {
-        error: `Unable to upload to S3: ${error.stack}`,
+        error: `Unable to copy to S3: ${copyError.stack}`,
       }));
     }
 
-    responseData.currentAdvert = db.adverts.find(ad => ad.name === db.currentAdvertName);
+    return helpers.writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, JSON.stringify(db), (error) => {
+      if (error) {
+        return res.render('index', Object.assign({}, responseData, {
+          error: `Unable to upload to S3: ${error.stack}`,
+        }));
+      }
 
-    return res.render('index', Object.assign({}, responseData, {
-      success: `Current advert is now '${req.body.advert_name}'`,
-    }));
-  });
+      responseData.currentAdvert = db.adverts.find(ad => ad.name === db.currentAdvertName);
+
+      return res.render('index', Object.assign({}, responseData, {
+        success: `Current advert is now '${req.body.advert_name}'`,
+      }));
+    });
+  };
+
+  if (targetSizeName) {
+    return helpers.copy(advertToSet.imageFileName, targetSizeName, finish);
+  }
+  return finish();
 };
 
 router.post('/advert', multer.single('advert_image'), (req, res) => {

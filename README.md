@@ -89,3 +89,7 @@ DATABASE_PATH=$PWD/adverts/adverts.json pm2 start rotator.js --name opsview-adve
 - Not using Babel so if any ES7+ features don't work in Node use // eslint-disable-line
 - Before commiting, the code should be linted with `yarn run lint` and any errors corrected
 - A part of development is ensuring our dependencies are up to date, this can be done with `yarn update-interactive`
+
+## Legacy
+This currently supports Opsview's legacy advert architecture. Checkout commit `6be71ae53bb695b3e07ae411dd498bba922f8e5d` to see what was added to add support and remove if no longer needed.
+Supporting this legacy architecture makes this system quite fragile and may require manual fixing of the database / s3 repo if errors happen during processing or uploading.

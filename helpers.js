@@ -55,7 +55,11 @@ module.exports = {
       throw new Error('Files array is empty');
     }
 
-    files.forEach(file => fs.unlinkSync(`${process.env.PWD}/adverts/${file}`));
+    try {
+      files.forEach(file => fs.unlinkSync(`${process.env.PWD}/adverts/${file}`));
+    } catch (error) {
+      console.log(error);
+    }
 
     const deleter = client.deleteObjects({
       Bucket: bucket,
@@ -85,5 +89,40 @@ module.exports = {
 
       return callback(true);
     });
+  },
+  copy(source, target, callback, bucket = process.env.BUCKET) {
+    client.s3.copyObject({
+      ACL: 'public-read',
+      Bucket: bucket,
+      Key: target,
+      CopySource: `${bucket}/${source}`,
+    }, (error) => {
+      if (error) {
+        callback(error);
+      } else {
+        callback(null, true);
+      }
+    });
+  },
+  isVersionAbove53(version) {
+    const isVersionStringAbove53 = (versionString) => {
+      if (versionString === 'all') {
+        return false;
+      }
+      const majorVersion = Number(versionString.split('.')[0]);
+      const minorVersion = Number(versionString.split('.')[1]);
+
+      if (majorVersion >= 6 || (majorVersion >= 5 && minorVersion >= 4)) {
+        return true;
+      }
+      return false;
+    };
+
+    if (typeof version === 'string') {
+      return isVersionStringAbove53(version);
+    } else if (Array.isArray(version)) {
+      return version.some(isVersionStringAbove53);
+    }
+    return undefined;
   },
 };
