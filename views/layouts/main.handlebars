@@ -1,55 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <base href="{{getBaseUri}}">
-    <title>Opsview Adverts</title>
-    <style>
-      *:not(code, pre) {
-        font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif !important;
-      }
-      .opsview {
-        background-color: rgb(55,29,76) !important;
-      }
-      .opsview-text {
-        color: rgb(55,29,76) !important;
-      }
-    </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.1/css/materialize.min.css">
-  </head>
-  <body class="grey lighten-4">
-    <nav class="opsview">
-      <div class="nav-wrapper container">
-        <a href="" class="brand-logo"><b>Opsview Adverts</b></a>
-        <a href="#" data-activates="mobile-demo" class="button-collapse">Menu</a>
-        <ul id="nav-mobile" class="right hide-on-med-and-down">
-          <li><a href="advert">Add Advert</a></li>
-          <li><a href="developers">Documentation</a></li>
-        </ul>
-        <ul class="side-nav" id="mobile-demo">
-          <li><a href="advert">Add Advert</a></li>
-          <li><a href="developers">Documentation</a></li>
-        </ul>
-      </div>
-    </nav>
-    <div class="container">
-      {{#if success}}
-        <div class="card-panel green accent-4 white-text" role="alert"><b>{{success}}</b></div>
-      {{/if}}
-      {{#if error}}
-        <div class="card-panel red accent-4 white-text" role="alert"><b>{{error}}</b></div>
-      {{/if}}
-      {{{body}}}
-    </div>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.1/js/materialize.min.js"></script>
-    <script>
-      $(".button-collapse").sideNav();
-      $(document).ready(function() {
-        $('select').material_select();
-      });
-    </script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="/public/style.css">
+  <title>Opsview Adverts</title>
+</head>
+<body>
+  {{{body}}}
+</body>
+<script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+<script src="/public/opsview-adverts.js"></script>
 </html>

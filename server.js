@@ -1,67 +1,31 @@
 const express = require('express');
-const morgan = require('morgan');
-const moment = require('moment');
-const expressHandlebars = require('express-handlebars');
-const fs = require('fs');
-const dotenv = require('dotenv');
-const auth = require('http-auth');
-const indexRoutes = require('./routes/index');
-const advertRoutes = require('./routes/advert');
-const actionsRoutes = require('./routes/actions');
-const developersRoutes = require('./routes/developers');
-
-dotenv.load();
+const handlebars = require('express-handlebars');
+const routes = require('./routes/index');
+const { log, db } = require('./helpers');
 
 const app = express();
-const helpers = require(`${process.env.PWD}/helpers.js`); // eslint-disable-line
 
-helpers.doesFileExist('adverts.json', (doesExist) => {
-  if (!doesExist) {
-    console.log(`${new Date()}`, 'Adverts database not available on S3, uploading...');
-    const doesExistLocally = fs.existsSync(process.env.DATABASE_PATH) ? false : JSON.stringify({
-      advertsStatus: false,
-      currentAdvertMobile: '',
-      currentAdvertDesktop1: '',
-      currentAdvertDesktop2: '',
-      adverts: [],
-    });
-    helpers.writeAndUploadFile('adverts.json', process.env.DATABASE_PATH, doesExistLocally, (error) => {
-      if (error) {
-        throw new Error('Could not upload adverts database to S3');
-      }
+app.engine('handlebars', handlebars({ defaultLayout: 'main' }));
+app.set('view engine', 'handlebars');
+app.use('/public', express.static(`${__dirname}/public`));
 
-      console.log(`${new Date()}`, 'Adverts database uploaded to S3');
-    });
+db.all('select * from adverts', (error, result) => {
+  if (result === undefined) {
+    log('info', 'Creating database table');
+    db.run(`
+      create table adverts (
+        
+      )
+    `);
   } else {
-    console.log(`${new Date()}`, 'Adverts database exists on S3');
+    log('info', 'Database already exists; skipping creation');
   }
 });
 
-// Add our helpers
-const handlebars = expressHandlebars.create({
-  defaultLayout: 'main',
-  helpers: {
-    created: time => moment.unix(time).fromNow(),
-    ternary: (condition, outcome1, outcome2) => (condition ? outcome1 : outcome2),
-    getBaseUri: () => process.env.BASE_URI,
-  },
-});
+app.use('/', routes);
 
-// Setup
-app.engine('handlebars', handlebars.engine);
-app.set('view engine', 'handlebars');
-app.use('/public', express.static('public'));
-app.use(morgan('combined'));
-app.use(auth.connect(auth.basic({
-  realm: 'opsview-adverts',
-  file: `${process.env.PWD}/users.htpasswd`,
-})));
+app.get('/', (req, res) => res.render('index'));
 
-// Inject routes
-app.use('/', indexRoutes, advertRoutes, actionsRoutes, developersRoutes);
-
-// Add catching routes
-app.get('*', (req, res) => res.render('404'));
-app.post('*', (req, res) => res.sendStatus(404));
-
-app.listen(process.env.PORT, () => console.log(`${new Date()}`, 'Opsview Adverts server online ✅'));
+app.listen(process.env.PORT || 8000, () => log(
+  'info', `Server running on port ${process.env.PORT || 8000}`
+));

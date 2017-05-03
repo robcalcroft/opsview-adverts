@@ -1,33 +1,40 @@
 {
   "name": "opsview-adverts",
   "version": "1.0.0",
+  "description": "Opsview advert manager",
   "main": "server.js",
-  "repository": "https://github.com/robcalcroft/opsview-adverts.git",
-  "author": "Rob Calcroft <rob@calcroft.com>",
+  "repository": "https://github.com/robcalcroft/opsview-adverts",
+  "author": "Rob Calcroft <rob.calcroft@opsview.com>",
   "license": "MIT",
-  "scripts": {
-    "lint": "eslint routes/ server.js",
-    "start-server": "DATABASE_PATH=$PWD/adverts/adverts.json PORT=8000 node server.js",
-    "start-rotator": "DATABASE_PATH=$PWD/adverts/adverts.json node rotator.js"
-  },
   "dependencies": {
-    "body-parser": "^1.17.1",
-    "cron": "^1.2.1",
-    "dotenv": "^4.0.0",
-    "eslint": "^3.18.0",
+    "chalk": "^1.1.3",
     "express": "^4.15.2",
     "express-handlebars": "^3.0.0",
-    "handlebars": "^4.0.6",
-    "http-auth": "^3.1.3",
-    "moment": "^2.18.0",
-    "morgan": "^1.8.1",
     "multer": "^1.3.0",
     "s3": "^4.4.0",
-    "winston": "^2.3.1"
+    "sqlite3": "^3.1.8"
   },
   "devDependencies": {
-    "eslint": "^3.18.0",
-    "eslint-config-airbnb-base": "^11.1.1",
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb-base": "^11.1.3",
     "eslint-plugin-import": "^2.2.0"
+  },
+  "adverts": {
+    "versions": [
+      "4.6.0",
+      "5.0.0",
+      "5.0.1",
+      "5.0.2",
+      "5.1.0",
+      "5.1.1",
+      "5.2.0",
+      "5.2.1",
+      "5.3.0"
+    ],
+    "sizes": [
+      "600x200",
+      "640x960",
+      "500x300"
+    ]
   }
 }

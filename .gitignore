@@ -1,7 +1,3 @@
-node_modules/
-tmp/
-*.log
-.env
-adverts/*
-users.json
-*.htpasswd
+node_modules
+tmp
+.env*

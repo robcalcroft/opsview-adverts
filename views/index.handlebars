@@ -1,110 +1,33 @@
-<br>
-<div class="card">
-  <div class="card-content">
-    <span class="card-title">Welcome</span>
-    <div class="row">
-      <div class="col m4">
-        Opsview Adverts control panel allows access to <b>add and delete</b> adverts in the rotation used on our web UI, mobile devices and other areas.
-      </div>
-      <div class="col m4">
-        Adverts are cycled <b>every 48 hours</b> and served from S3.
-      </div>
-      <div class="col m4">
-        The current adverts in rotation are shown below with the advert currently visible to our customers highlighted.
-      </div>
-    </div>
+<div class="container">
+  <div class="current">
+    <h1>Current</h1>
+    <form class="add-advert" enctype="multipart/form-data">
+      <h3>Add Advert</h3>
+      <input type="text" name="advert_name" placeholder="Name" required>
+      <input type="text" name="advert_redirect_url" placeholder="Redirect Url" required>
+      <select name="advert_target_version" multiple required>
+        <option value="all" selected="">All Versions</option>
+        <option value="5.3.0">5.3.0</option>
+        <option value="5.2.1">5.2.1</option>
+        <option value="5.2.0">5.2.0</option>
+        <option value="5.1.0">5.1.0</option>
+        <option value="5.0.2">5.0.2</option>
+        <option value="5.0.1">5.0.1</option>
+        <option value="5.0.0">5.0.0</option>
+        <option value="4.6.0">4.6.0</option>
+      </select>
+      <select name="advert_target_size" required>
+        <option value="640x960">Mobile (640x960)</option>
+        <option value="500x300">Desktop (500x300)</option>
+        <option value="600x200">Desktop (600x200)</option>
+      </select>
+      <input type="file" name="advert_image" placeholder="Image" required>
+      <button type="submit">Add</button>
+      <img src="https://i.stack.imgur.com/kOnzy.gif" style="display:none;width:20px;height:20px;" id="add-advert-loader">
+    </form>
+    <h3>Adverts</h3>
+  </div>
+  <div class="future">
+    <h1>Future</h1>
   </div>
 </div>
-<div class="row">
-  <div class="col m6">
-    <div class="card">
-      <div class="card-content">
-        <span class="card-title">Status</span>
-        <div class="collection">
-          <div class="collection-item">
-              {{#if advertsStatus}}
-                <span data-badge-caption="" class="badge new green accent-4">On</span>Adverts Status
-              {{else}}
-                <span data-badge-caption="" class="badge new red accent-4">Off</span>Adverts Status
-              {{/if}}
-          </div>
-          <a class="collection-item opsview-text" target="_blank" href={{currentAdvertMobile.s3Url}}>
-            <span data-badge-caption="" class="badge new opsview">{{ternary currentAdvertMobile.name currentAdvertMobile.name '-'}}</span>Current Showing Mobile Ad
-          </a>
-          <a class="collection-item opsview-text" target="_blank" href={{currentAdvertDesktop1.s3Url}}>
-            <span data-badge-caption="" class="badge new opsview">{{ternary currentAdvertDesktop1.name currentAdvertDesktop1.name '-'}}</span>Current Showing Desktop 1 Ad
-          </a>
-          <a class="collection-item opsview-text" target="_blank" href={{currentAdvertDesktop2.s3Url}}>
-            <span data-badge-caption="" class="badge new opsview">{{ternary currentAdvertDesktop2.name currentAdvertDesktop2.name '-'}}</span>Current Showing Desktop 2 Ad
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col m6">
-    <div class="card">
-      <div class="card-content">
-        <span class="card-title">Actions</span>
-        <form action="action" method="post" enctype="multipart/form-data">
-          <input type="hidden" name="toggleAdvertsStatus" value="{{advertsStatusToggled}}">
-          <button class="btn waves-effect waves-light opsview" type="submit">
-            {{#if advertsStatus}}
-              Disable all adverts
-            {{else}}
-              Enable all adverts
-            {{/if}}
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-<h5>Adverts</h5>
-{{#unless showAdverts}}
-  <div class="card-panel light-blue darken-3 white-text" role="alert"><b>There are no adverts in the database</b></div>
-{{/unless}}
-{{#each adverts}}
-  <div class="card horizontal">
-    <div class="card-image hide-on-med-and-down">
-      <img src="{{this.s3Url}}" style="width: 200px;">
-    </div>
-    <div class="card-stacked">
-      <div class="card-content">
-        <table class="responsive-table">
-          <thead>
-            <tr>
-              <th>Advert Name</th>
-              <th>Target Versions</th>
-              <th>Target Size</th>
-              <th>Created</th>
-              <th>Redirect Url</th>
-              <th class="hide-on-large-only">S3 Url</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{{this.name}}</td>
-              <td>{{this.targetVersion}}</td>
-              <td>{{this.targetSize}}</td>
-              <td>{{created this.created}}</td>
-              <td><a href="{{this.redirectUrl}}">{{this.redirectUrl}}</a></td>
-              <td class="hide-on-large-only"><a href="{{this.s3Url}}">{{this.s3Url}}</a></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="card-action">
-        <form action="advert" method="post" enctype="multipart/form-data" style="display:inline;">
-          <input type="hidden" name="cmd" value="change">
-          <input type="hidden" name="advert_name" value="{{this.name}}">
-          <button type="submit" class="btn opsview">Set As Current Advert</button>
-        </form>
-        <form action="advert" method="post" enctype="multipart/form-data" style="display:inline;">
-          <input type="hidden" name="cmd" value="remove">
-          <input type="hidden" name="advert_name" value="{{this.name}}">
-          <button type="submit" class="btn red accent-4">Delete</button>
-        </form>
-      </div>
-    </div>
-  </div>
-{{/each}}
