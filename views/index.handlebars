@@ -1,31 +1,43 @@
 <div class="container">
   <div class="current">
+    <button id="toggleAds">Toggle Ads</button>
     <h1>Current</h1>
-    <form class="add-advert" enctype="multipart/form-data">
+    <form id="addAdvert" enctype="multipart/form-data">
       <h3>Add Advert</h3>
-      <input type="text" name="advert_name" placeholder="Name" required>
-      <input type="text" name="advert_redirect_url" placeholder="Redirect Url" required>
-      <select name="advert_target_version" multiple required>
-        <option value="all" selected="">All Versions</option>
-        <option value="5.3.0">5.3.0</option>
-        <option value="5.2.1">5.2.1</option>
-        <option value="5.2.0">5.2.0</option>
-        <option value="5.1.0">5.1.0</option>
-        <option value="5.0.2">5.0.2</option>
-        <option value="5.0.1">5.0.1</option>
-        <option value="5.0.0">5.0.0</option>
-        <option value="4.6.0">4.6.0</option>
-      </select>
+      <input name="advert_name" placeholder="Name" required>
+      <input name="advert_redirect_url" placeholder="Redirect Url" required>
       <select name="advert_target_size" required>
         <option value="640x960">Mobile (640x960)</option>
         <option value="500x300">Desktop (500x300)</option>
         <option value="600x200">Desktop (600x200)</option>
       </select>
       <input type="file" name="advert_image" placeholder="Image" required>
+      <div>
+        <input type="checkbox" name="advert_override" id="advert_override">
+        <label for="advert_override">Set as current advert for this size?</label>
+      </div>
       <button type="submit">Add</button>
-      <img src="https://i.stack.imgur.com/kOnzy.gif" style="display:none;width:20px;height:20px;" id="add-advert-loader">
+      <div id="addAdvert__loader" style="display:none;">Loading...</div>
     </form>
+
     <h3>Adverts</h3>
+    <div class="currentAdverts">
+      <div class="currentAdverts__640x960">
+        <h4>640x960</h4>
+        <div id="currentAdverts__loader__640x960">Loading...</div>
+        <div id="currentAdverts__body__640x960"></div>
+      </div>
+      <div class="currentAdverts__500x300">
+        <h4>500x300</h4>
+        <div id="currentAdverts__loader__500x300">Loading...</div>
+        <div id="currentAdverts__body__500x300"></div>
+      </div>
+      <div class="currentAdverts__600x200">
+        <h4>600x200</h4>
+        <div id="currentAdverts__loader__600x200">Loading...</div>
+        <div id="currentAdverts__body__600x200"></div>
+      </div>
+    </div>
   </div>
   <div class="future">
     <h1>Future</h1>
