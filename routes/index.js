@@ -1,5 +1,4 @@
-const add = require('./add');
-const get = require('./get');
-const toggleAdverts = require('./toggle-adverts');
+const advert = require('./advert');
+const status = require('./status');
 
-module.exports = [add, get, toggleAdverts];
+module.exports = [advert, status];

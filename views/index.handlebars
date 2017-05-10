@@ -1,45 +1,71 @@
-<div class="container">
-  <div class="current">
-    <button id="toggleAds">Toggle Ads</button>
-    <h1>Current</h1>
-    <form id="addAdvert" enctype="multipart/form-data">
+<div id="modal1" class="modal">
+  <form id="addAdvert" enctype="multipart/form-data">
+    <div class="modal-content">
       <h3>Add Advert</h3>
-      <input name="advert_name" placeholder="Name" required>
-      <input name="advert_redirect_url" placeholder="Redirect Url" required>
+      <div class="row">
+        <div class="col m6 s12">
+          <input name="advert_name" placeholder="Name" required>
+        </div>
+        <div class="col m6 s12">
+          <input name="advert_redirect_url" placeholder="Redirect Url" required>
+        </div>
+      </div>
       <select name="advert_target_size" required>
         <option value="640x960">Mobile (640x960)</option>
         <option value="500x300">Desktop (500x300)</option>
         <option value="600x200">Desktop (600x200)</option>
       </select>
-      <input type="file" name="advert_image" placeholder="Image" required>
+      <div class="file-field input-field">
+        <div class="btn orange lighten-1">
+          <span>Advert Image</span>
+          <input type="file" name="advert_image" required>
+        </div>
+        <div class="file-path-wrapper">
+          <input class="file-path validate" type="text">
+        </div>
+      </div>
       <div>
         <input type="checkbox" name="advert_override" id="advert_override">
         <label for="advert_override">Set as current advert for this size?</label>
       </div>
-      <button type="submit">Add</button>
-      <div id="addAdvert__loader" style="display:none;">Loading...</div>
-    </form>
-
-    <h3>Adverts</h3>
-    <div class="currentAdverts">
-      <div class="currentAdverts__640x960">
-        <h4>640x960</h4>
-        <div id="currentAdverts__loader__640x960">Loading...</div>
-        <div id="currentAdverts__body__640x960"></div>
-      </div>
-      <div class="currentAdverts__500x300">
-        <h4>500x300</h4>
-        <div id="currentAdverts__loader__500x300">Loading...</div>
-        <div id="currentAdverts__body__500x300"></div>
-      </div>
-      <div class="currentAdverts__600x200">
-        <h4>600x200</h4>
-        <div id="currentAdverts__loader__600x200">Loading...</div>
-        <div id="currentAdverts__body__600x200"></div>
+      <br />
+      <div id="addAdvert__loader" style="display:none;">Adding...</div>
+    </div>
+    <div class="modal-footer">
+      <button type="submit" class="modal-action btn-flat">Add Advert</button>
+      <a href="#!" class="modal-action modal-close btn-flat">Cancel</a>
+    </div>
+  </form>
+</div>
+<main>
+  <div id="advertOfflineMessage" style="display:none;" class="card-panel red white-text">
+    <h5 class="center">Adverts are disabled; click enable ads above to start them</h5>
+  </div>
+  <div class="main__container">
+    <div class="current">
+      <h4><b>Live Ads</b></h4>
+      <div class="currentAdverts">
+        <div class="card horizontal currentAdverts__640x960">
+          <div class="card-content">
+            <div id="currentAdverts__loader__640x960">Loading...</div>
+          </div>
+        </div>
+        <div class="card currentAdverts__500x300">
+          <div class="card-content">
+            <div id="currentAdverts__loader__500x300">Loading...</div>
+          </div>
+        </div>
+        <div class="card currentAdverts__600x200">
+          <div class="card-content">
+            <div id="currentAdverts__loader__600x200">Loading...</div>
+          </div>
+        </div>
       </div>
     </div>
+    <div style="width: 20px;"></div>
+    <div class="future">
+      <h4><b>Future Ads</b></h4>
+      <p>In development</p>
+    </div>
   </div>
-  <div class="future">
-    <h1>Future</h1>
-  </div>
-</div>
+</main>

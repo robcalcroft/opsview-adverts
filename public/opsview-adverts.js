@@ -20,48 +20,101 @@ var formListener = function() {
     .always(function() {
       advertLoader.hide();
     })
-    .done(function(data) {
-      console.log('done', data);
+    .done(function() {
+      window.location.reload();
     })
     .fail(function(error) {
-      console.log('fail', error)
+      alert('Failed: ' + error.message);
     });
   });
 }
 
 var getCurrentAdverts = function() {
   sizes.forEach(function(size) {
-    $.getJSON(s3BaseUrl + s3Bucket + '/' + size + '/advert.json')
+    $.getJSON(s3BaseUrl + s3Bucket + '/' + size + '/advert.json?time=' + new Date().getTime())
     .always(function() {
       $('#currentAdverts__loader__' + size).hide();
     })
     .done(function(advert) {
-      $('#currentAdverts__body__' + size).html(
-        '<div>Redirect Link: <a href="' + advert.redirect_url + '">' + advert.redirect_url + '</a></div>' +
-        '<img width="50%" src="' + advert.image_url + '" />'
+      var imageUrl = advert.image_url.split('/');
+
+      $('.currentAdverts__' + size).html(
+        '<div class="card-image">' +
+          '<img src="' + advert.image_url + '">' +
+        '</div>' +
+        '<div class="card-stacked">' +
+          '<div class="card-content">' +
+            '<p>Advert for ' + size + '</p>' +
+          '</div>' +
+          '<div class="card-action">' +
+            '<a href="' + advert.redirect_url + '">Go to redirect URL</a>' +
+            '<a href="#" onClick="deleteButtonListener(\'' + imageUrl[imageUrl.length - 1] + '\');" class="deleteButton">Delete</a>' +
+          '</div>' +
+        '</div>'
       );
     })
     .fail(function(error) {
-      $('#currentAdverts__body__' + size).html('Error loading advert');
+      var sizeMap = {
+        '640x960': 'Usually mobile',
+        '500x300': 'Usually a login screen',
+        '600x200': 'Usually used for product reload',
+      };
+      $('.currentAdverts__' + size + ' > .card-content').html('No advert available for ' + size + ' (' + sizeMap[size] + ')');
     });
   });
 }
 
 var toggleAdsListener = function() {
   $('button#toggleAds').click(function() {
-    var buttonText = $(this).html();
+    var areAdsEnabled = $(this).attr('data-enabled');
     $(this).html('Loading...');
-    $.post('/api/status', { enabled: false })
+    $.post('/api/status', { enabled: areAdsEnabled === '1' ? 0 : 1 })
     .always(function() {
-      $(this).html(buttonText);
-    }.bind(this));
+      window.location.reload();
+    });
+  });
+}
+
+var getToggleAdButtonText = function() {
+  var button = $('button#toggleAds');
+  $.getJSON('/api/status')
+  .done(function(data) {
+    button.html(data.result.enabled ? 'Disable Ads' : 'Enable Ads');
+    button.attr('data-enabled', data.result.enabled);
+    if (!data.result.enabled) {
+      $('#advertOfflineMessage').show();
+    }
+  })
+  .fail(function(data) {
+    button.html('Error');
+  });
+}
+
+var deleteButtonListener = function(image) {
+  $.ajax({
+    url: '/api/advert?image_name=' + image,
+    method: 'DELETE',
+  })
+  .done(function() {
+    window.location.reload();
+  })
+  .fail(function() {
+    console.log('fail')
   });
 }
 
 $(function() {
+  // Listens to submissions for new adverts
   formListener();
+  // Gets the current ads from S3
   getCurrentAdverts();
+  // Listens for a click on the toggle ad status button
   toggleAdsListener();
+  // Sets the text on the toggle ad status button
+  getToggleAdButtonText();
+  // Materialize initialisation
+  $('select').material_select();
+  $('.modal').modal();
 });
 
 // var getAdverts = function() {

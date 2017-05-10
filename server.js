@@ -4,8 +4,13 @@ const routes = require('./routes/index');
 const { log, db } = require('./helpers');
 const statusSql = require('./schema/status');
 const advertsSql = require('./schema/adverts');
+const { amazon_bucket } = require('./.env.json');
 
 const app = express();
+
+if (!amazon_bucket) { // eslint-disable-line camelcase
+  throw new Error('You need `amazon_bucket` to be present in your .env.json');
+}
 
 app.engine('handlebars', handlebars({ defaultLayout: 'main' }));
 app.set('view engine', 'handlebars');
@@ -26,6 +31,14 @@ db.all('select * from adverts', (error, result) => {
         log('error', 'Error creating status table', databaseError);
       } else {
         log('success', 'Status table created');
+        log('info', 'Adding advert status record');
+        db.run('insert into status (enabled, status_name) values (?, ?)', [false, 'adverts'], (insertError) => {
+          if (insertError) {
+            log('error', 'Could not add adverts status', insertError.message);
+          } else {
+            log('success', 'Added adverts status record');
+          }
+        });
       }
     });
   } else {

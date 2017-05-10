@@ -4,22 +4,23 @@ const request = require('request-promise-native');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const { client, log } = require('../helpers');
+const { client, log, db } = require('../helpers');
+const { amazon_bucket: bucket } = require('../.env.json');
 
 const router = express.Router();
 const sizes = ['640x960', '500x300', '600x200'];
-const bucket = 'opsview-adverts-testing';
 const tmpPath = path.resolve('tmp');
 
 router.post('/status', bodyParser.urlencoded({ extended: true }), (req, res) => {
+  const enabled = req.body.enabled === '1';
+  log('info', `${enabled ? 'Enabling' : 'Disabling'} adverts`);
+
   const advertResponses = sizes.map(size => new Promise((resolve) => {
     request(`https://s3.amazonaws.com/${bucket}/${size}/advert.json`)
-    .then((data) => {
-      resolve({
-        size,
-        data,
-      });
-    })
+    .then(data => resolve({
+      size,
+      data,
+    }))
     .catch(() => resolve(false));
   }));
 
@@ -29,10 +30,11 @@ router.post('/status', bodyParser.urlencoded({ extended: true }), (req, res) => 
     const uploaders = successfulResponses.map(response => new Promise((resolve, reject) => {
       const tmpFileName = crypto.randomBytes(32).toString('hex');
       const tmpFilePath = `${tmpPath}/${tmpFileName}`;
-      //Log everytjing dunno why its looks weird!
-      fs.writeFileSync(tmpFilePath, JSON.stringify(Object.assign({}, response.data, {
-        enabled: false,
-      })));
+      const parsedResponse = JSON.parse(response.data);
+
+      parsedResponse.enabled = enabled;
+
+      fs.writeFileSync(tmpFilePath, JSON.stringify(parsedResponse));
 
       const uploader = client.uploadFile({
         localFile: tmpFilePath,
@@ -57,16 +59,44 @@ router.post('/status', bodyParser.urlencoded({ extended: true }), (req, res) => 
     }));
 
     Promise.all(uploaders).then(() => {
-      log('success', 'Adverts disabled');
-      res.json({
-        success: true,
+      db.run('update status set enabled=? where status_name=?', [enabled, 'adverts'], (error) => {
+        if (error) {
+          log('error', 'Error updating status in database', error.message);
+          res.status(500).json({
+            success: false,
+            message: `Error updating status in database ${error.message}`,
+          });
+        } else {
+          log('success', `Adverts ${enabled ? 'Enabled' : 'Disabled'}`);
+          res.json({
+            success: true,
+          });
+        }
       });
     }).catch((error) => {
-      log('error', 'Error when disabling adverts', error.message);
+      log('error', `Error when ${enabled ? 'enabling' : 'disabling'} adverts`, error.message);
       res.status(500).json({
         success: false,
       });
     });
+  });
+});
+
+router.get('/status', (req, res) => {
+  db.get('select enabled from status where status_name=?', ['adverts'], (error, result) => {
+    if (error) {
+      const message = 'Error when retrieving records from database';
+      log('error', message, error);
+      res.json({
+        success: true,
+        message,
+      });
+    } else {
+      res.json({
+        success: true,
+        result,
+      });
+    }
   });
 });
 

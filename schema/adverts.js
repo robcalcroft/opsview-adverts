@@ -5,6 +5,6 @@ module.exports = `
     created datetime not null default(strftime('%s','now')),
     redirect_url varchar(500) not null,
     image_name varchar(200) not null,
-    primary key (name)
+    primary key (name, image_name)
   )
 `;
