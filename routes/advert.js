@@ -103,6 +103,7 @@ router.post('/advert/new', upload.single('advert_image'), (req, res) => {
   // for that advert so we can just upload the image and add it to the database
   const promisesToWaitFor = [imageUpload];
   if (advertOverride !== undefined) {
+    log('info', 'Updating advert file on S3');
     promisesToWaitFor.push(metaDataUpload);
   }
 
