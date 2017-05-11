@@ -52,59 +52,56 @@ router.post('/advert/new', upload.single('advert_image'), (req, res) => {
     });
   });
 
-  // Conditonally run this step based on if we set uploaded as current
-  const metaDataUpload = new Promise((resolve, reject) => {
-    const tmpFileName = `${advertTargetSize}.json`;
-
-    db.all('select enabled from status where status_name=?', ['adverts'], (dbError, result) => {
-      if (dbError) {
-        return reject(dbError);
-      }
-
-      // Write out the file temporarily so that the s3 SDK can upload it
-      fs.writeFileSync(`${tmpPath}/${tmpFileName}`, JSON.stringify({
-        enabled: !!result[0].enabled,
-        image_url: `https://s3.amazonaws.com/${bucket}/${computedS3ImageLocation}`,
-        redirect_url: advertRedirectUrl,
-      }));
-
-      // Create the uploader object that will upload the advert file to s3
-      const uploader = client.uploadFile({
-        localFile: `${tmpPath}/${tmpFileName}`,
-        s3Params: {
-          ACL: 'public-read',
-          Bucket: bucket,
-          Key: `${advertTargetSize}/advert.json`,
-        },
-      });
-
-      // Listen to when this upload is complete and resolve the promise
-      uploader.on('end', () => {
-        log('success', `Advert metadata file for size ${advertTargetSize} uploaded`);
-
-        // Attempt to delete the temp file we created as cleanup
-        try {
-          fs.unlinkSync(`${tmpPath}/${tmpFileName}`);
-        } catch (error) {
-          log('warning', 'Error removing temporary file, this should be cleaned up by the OS');
-        }
-        resolve();
-      });
-
-      // Listen for errors and report a rejection
-      return uploader.on('error', (error) => {
-        log('error', `Advert metadata file for size ${advertTargetSize} errored during upload`, error.message);
-        reject(error);
-      });
-    });
-  });
-
   // If we are not overriding the current advert then we dont need to modify the advert.json file
   // for that advert so we can just upload the image and add it to the database
   const promisesToWaitFor = [imageUpload];
   if (advertOverride !== undefined) {
     log('info', 'Updating advert file on S3');
-    promisesToWaitFor.push(metaDataUpload);
+    promisesToWaitFor.push(new Promise((resolve, reject) => {
+      const tmpFileName = `${advertTargetSize}.json`;
+
+      db.all('select enabled from status where status_name=?', ['adverts'], (dbError, result) => {
+        if (dbError) {
+          return reject(dbError);
+        }
+
+        // Write out the file temporarily so that the s3 SDK can upload it
+        fs.writeFileSync(`${tmpPath}/${tmpFileName}`, JSON.stringify({
+          enabled: !!result[0].enabled,
+          image_url: `https://s3.amazonaws.com/${bucket}/${computedS3ImageLocation}`,
+          redirect_url: advertRedirectUrl,
+        }));
+
+        // Create the uploader object that will upload the advert file to s3
+        const uploader = client.uploadFile({
+          localFile: `${tmpPath}/${tmpFileName}`,
+          s3Params: {
+            ACL: 'public-read',
+            Bucket: bucket,
+            Key: `${advertTargetSize}/advert.json`,
+          },
+        });
+
+        // Listen to when this upload is complete and resolve the promise
+        uploader.on('end', () => {
+          log('success', `Advert metadata file for size ${advertTargetSize} uploaded`);
+
+          // Attempt to delete the temp file we created as cleanup
+          try {
+            fs.unlinkSync(`${tmpPath}/${tmpFileName}`);
+          } catch (error) {
+            log('warning', 'Error removing temporary file, this should be cleaned up by the OS');
+          }
+          resolve();
+        });
+
+        // Listen for errors and report a rejection
+        return uploader.on('error', (error) => {
+          log('error', `Advert metadata file for size ${advertTargetSize} errored during upload`, error.message);
+          reject(error);
+        });
+      });
+    }));
   }
 
   // When the metadata and image have been uploaded this runs or when one of them fails

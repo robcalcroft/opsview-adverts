@@ -25,7 +25,7 @@
         </div>
       </div>
       <div>
-        <input type="checkbox" name="advert_override" id="advert_override">
+        <input type="checkbox" name="advert_override" id="advert_override" checked>
         <label for="advert_override">Set as current advert for this size?</label>
       </div>
       <br />
@@ -43,7 +43,7 @@
   </div>
   <div class="main__container">
     <div class="current">
-      <h4><b>Live Ads</b></h4>
+      <h4><b>Live</b></h4>
       <div class="currentAdverts">
         <div class="card horizontal currentAdverts__640x960">
           <div class="card-content">
@@ -64,8 +64,24 @@
     </div>
     <div style="width: 20px;"></div>
     <div class="future">
-      <h4><b>Future Ads</b></h4>
-      <p>In development</p>
+      <h4><b>Up Next</b></h4>
+      <div class="nextAds">
+        <div class="card horizontal nextAds__640x960">
+          <div class="card-content">
+            <div id="nextAds__loader__640x960">Loading...</div>
+          </div>
+        </div>
+        <div class="card nextAds__500x300">
+          <div class="card-content">
+            <div id="nextAds__loader__500x300">Loading...</div>
+          </div>
+        </div>
+        <div class="card nextAds__600x200">
+          <div class="card-content">
+            <div id="nextAds__loader__600x200">Loading...</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </main>

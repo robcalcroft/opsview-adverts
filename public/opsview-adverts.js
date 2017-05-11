@@ -29,6 +29,24 @@ var formListener = function() {
   });
 }
 
+var templateAdvertCard = function(advert, size) {
+  var imageUrl = advert.image_url.split('/');
+  return (
+    '<div class="card-image">' +
+      '<img src="' + advert.image_url + '">' +
+    '</div>' +
+    '<div class="card-stacked">' +
+      '<div class="card-content">' +
+        '<p>Advert for ' + size + '</p>' +
+      '</div>' +
+      '<div class="card-action">' +
+        '<a href="' + advert.redirect_url + '">Go to redirect URL</a>' +
+        '<a href="#" onClick="deleteButtonListener(\'' + imageUrl[imageUrl.length - 1] + '\');" class="deleteButton">Delete</a>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
 var getCurrentAdverts = function() {
   sizes.forEach(function(size) {
     $.getJSON(s3BaseUrl + s3Bucket + '/' + size + '/advert.json?time=' + new Date().getTime())
@@ -36,22 +54,7 @@ var getCurrentAdverts = function() {
       $('#currentAdverts__loader__' + size).hide();
     })
     .done(function(advert) {
-      var imageUrl = advert.image_url.split('/');
-
-      $('.currentAdverts__' + size).html(
-        '<div class="card-image">' +
-          '<img src="' + advert.image_url + '">' +
-        '</div>' +
-        '<div class="card-stacked">' +
-          '<div class="card-content">' +
-            '<p>Advert for ' + size + '</p>' +
-          '</div>' +
-          '<div class="card-action">' +
-            '<a href="' + advert.redirect_url + '">Go to redirect URL</a>' +
-            '<a href="#" onClick="deleteButtonListener(\'' + imageUrl[imageUrl.length - 1] + '\');" class="deleteButton">Delete</a>' +
-          '</div>' +
-        '</div>'
-      );
+      $('.currentAdverts__' + size).html(templateAdvertCard(advert, size));
     })
     .fail(function(error) {
       var sizeMap = {
@@ -99,7 +102,52 @@ var deleteButtonListener = function(image) {
     window.location.reload();
   })
   .fail(function() {
-    console.log('fail')
+    console.log('fail');
+  });
+}
+
+var getFutureAdverts = function() {
+  $.getJSON('/api/advert')
+  .always(function() {
+    sizes.forEach(function(size) {
+      $('#nextAds__loader__' + size).hide();
+    });
+  })
+  .done(function(data) {
+    sizes.forEach(function(size) {
+      var sizeFilteredResult = data.result.filter(function(advert) {
+        return advert.target_size === size;
+      });
+      $.getJSON(s3BaseUrl + s3Bucket + '/' + size + '/advert.json?time=' + new Date().getTime())
+      .done(function(s3Data) {
+        var currentImage = s3Data.image_url.split('/');
+        currentImage = currentImage[currentImage.length - 1];
+
+        var indexOfCurrentAdvert = sizeFilteredResult.map(function(advert) {
+          return advert.image_name;
+        }).indexOf(currentImage);
+
+        if (indexOfCurrentAdvert === -1) {
+          return $('.nextAds__' + size + ' > .card-content').html('No future advert available for ' + size + '; the current one will stay live until a new one is added');
+        }
+
+        var nextAdvertIndex = sizeFilteredResult[indexOfCurrentAdvert + 1] === undefined ? 0 : (indexOfCurrentAdvert + 1);
+        var nextAdvert = sizeFilteredResult[nextAdvertIndex];
+
+        $('.nextAds__' + size).html(templateAdvertCard({
+          image_url: s3BaseUrl + s3Bucket + '/' + size + '/' + nextAdvert.image_name,
+          redirect_url: nextAdvert.redirect_url,
+        }, size));
+      })
+      .fail(function() {
+        $('.nextAds__' + size + ' > .card-content').html('No future advert available for ' + size + '; the current one will stay live until a new one is added');
+      });
+    });
+  })
+  .fail(function(error) {
+    sizes.forEach(function(size) {
+      $('.nextAds__' + size + ' > .card-content').html('No future advert available; the current one will stay live until a new one is added');
+    });
   });
 }
 
@@ -112,35 +160,9 @@ $(function() {
   toggleAdsListener();
   // Sets the text on the toggle ad status button
   getToggleAdButtonText();
+  // Gets all the ads from the database
+  getFutureAdverts();
   // Materialize initialisation
   $('select').material_select();
   $('.modal').modal();
 });
-
-// var getAdverts = function() {
-//   $.getJSON('/api/advert')
-//   .done(function(data) {
-//     // The database stores the target versions as a JSON array so we need to parse it into a usable
-//     // object
-//     var adverts = data.result;
-//     var createRow = function() {
-//       return $('<div></div>').addClass('list-advert__row');
-//     }
-//
-//     $('#list-advert-loader').hide();
-//
-//     adverts.forEach(function(advert) {
-//       var row = createRow().append(
-//         '<div>' + advert.name + '</div>' +
-//         '<a target="_blank" href="' + advert.redirect_url + '">' + advert.redirect_url + '</a>' +
-//         '<div>Added ' + moment.unix(advert.created).fromNow() + '</div>' +
-//         '<div>' + advert.target_size + '</div>' +
-//         '<img width="50%" src="https://s3.amazonaws.com/opsview-adverts-testing/' + advert.target_size + '/' + advert.image_name + '" />'
-//       );
-//       $('.list-adverts').append(row);
-//     });
-//   })
-//   .fail(function(error) {
-//     console.log(error);
-//   });
-// }
