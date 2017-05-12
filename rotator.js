@@ -18,7 +18,7 @@ const indexes = {
 
 log('info', 'Rotator started; rotating adverts every 48 hours');
 
-new Cron('30 * * * * *', () => { // eslint-disable-line no-new
+new Cron('* * */2 * * *', () => { // eslint-disable-line no-new
   log('info', 'Advert tick');
   const baseUrl = `${apiUrl}/api/advert`;
 
