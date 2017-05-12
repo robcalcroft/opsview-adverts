@@ -11,7 +11,7 @@ var formListener = function() {
     advertLoader.show();
 
     $.ajax({
-      url: '/api/advert/new',
+      url: 'api/advert/new',
       data: new FormData($(this)[0]),
       method: 'POST',
       processData: false,
@@ -76,7 +76,7 @@ var toggleAdsListener = function() {
   $('button#toggleAds').click(function() {
     var areAdsEnabled = $(this).attr('data-enabled');
     $(this).html('Loading...');
-    $.post('/api/status', { enabled: areAdsEnabled === '1' ? 0 : 1 })
+    $.post('api/status', { enabled: areAdsEnabled === '1' ? 0 : 1 })
     .fail(function(error) {
       swal(
         'Error',
@@ -92,7 +92,7 @@ var toggleAdsListener = function() {
 
 var getToggleAdButtonText = function() {
   var button = $('button#toggleAds');
-  $.getJSON('/api/status')
+  $.getJSON('api/status')
   .done(function(data) {
     button.html(data.result.enabled ? 'Disable Ads' : 'Enable Ads');
     button.attr('data-enabled', data.result.enabled);
@@ -112,7 +112,7 @@ var getToggleAdButtonText = function() {
 
 var deleteButtonListener = function(image) {
   $.ajax({
-    url: '/api/advert?image_name=' + image,
+    url: 'api/advert?image_name=' + image,
     method: 'DELETE',
   })
   .done(function() {
@@ -129,7 +129,7 @@ var deleteButtonListener = function(image) {
 }
 
 var getFutureAdverts = function() {
-  $.getJSON('/api/advert')
+  $.getJSON('api/advert')
   .always(function() {
     sizes.forEach(function(size) {
       $('#nextAds__loader__' + size).hide();
