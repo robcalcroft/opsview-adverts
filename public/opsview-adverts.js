@@ -24,7 +24,11 @@ var formListener = function() {
       window.location.reload();
     })
     .fail(function(error) {
-      alert('Failed: ' + error.message);
+      swal(
+        'Error',
+        error.responseJSON.message,
+        'error'
+      );
     });
   });
 }
@@ -38,9 +42,10 @@ var templateAdvertCard = function(advert, size) {
     '<div class="card-stacked">' +
       '<div class="card-content">' +
         '<p>Advert for ' + size + '</p>' +
+        '<p><b>Do not remove live adverts as this can cause issues on S3, wait till they go out of rotation</b></p>' +
       '</div>' +
       '<div class="card-action">' +
-        '<a href="' + advert.redirect_url + '">Go to redirect URL</a>' +
+        '<a target="_blank" href="' + advert.redirect_url + '">Go to URL</a>' +
         '<a href="#" onClick="deleteButtonListener(\'' + imageUrl[imageUrl.length - 1] + '\');" class="deleteButton">Delete</a>' +
       '</div>' +
     '</div>'
@@ -72,6 +77,13 @@ var toggleAdsListener = function() {
     var areAdsEnabled = $(this).attr('data-enabled');
     $(this).html('Loading...');
     $.post('/api/status', { enabled: areAdsEnabled === '1' ? 0 : 1 })
+    .fail(function(error) {
+      swal(
+        'Error',
+        error.responseJSON.message,
+        'error'
+      );
+    })
     .always(function() {
       window.location.reload();
     });
@@ -88,8 +100,13 @@ var getToggleAdButtonText = function() {
       $('#advertOfflineMessage').show();
     }
   })
-  .fail(function(data) {
+  .fail(function(error) {
     button.html('Error');
+    swal(
+      'Error',
+      error.responseJSON.message,
+      'error'
+    );
   });
 }
 
@@ -101,8 +118,13 @@ var deleteButtonListener = function(image) {
   .done(function() {
     window.location.reload();
   })
-  .fail(function() {
-    console.log('fail');
+  .fail(function(error, response) {
+    console.log(error)
+    swal(
+      'Error',
+      error.responseJSON.message,
+      'error'
+    );
   });
 }
 

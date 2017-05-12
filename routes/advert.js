@@ -184,13 +184,15 @@ router.delete('/advert', (req, res) => {
         });
       } else if (result.length !== 0) {
         log('info', 'Deleting', `${result[0].target_size}/${result[0].image_name}`, 'from S3');
+        // Potentially delete the advert.json if needed
+        // , {
+        //   Key: `${result[0].target_size}/advert.json`,
+        // }
         const deleter = client.deleteObjects({
           Bucket: bucket,
           Delete: {
             Objects: [{
               Key: `${result[0].target_size}/${result[0].image_name}`,
-            }, {
-              Key: `${result[0].target_size}/advert.json`,
             }],
           },
         });

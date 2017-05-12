@@ -1,5 +1,6 @@
 const express = require('express');
 const handlebars = require('express-handlebars');
+const auth = require('http-auth');
 const routes = require('./routes/index');
 const { log, db } = require('./helpers');
 const statusSql = require('./schema/status');
@@ -15,6 +16,10 @@ if (!amazon_bucket) { // eslint-disable-line camelcase
 app.engine('handlebars', handlebars({ defaultLayout: 'main' }));
 app.set('view engine', 'handlebars');
 app.use('/public', express.static(`${__dirname}/public`));
+app.use(auth.connect(auth.basic({
+  realm: 'opsview-adverts',
+  file: './users.htpasswd',
+})));
 
 db.all('select * from adverts', (error, result) => {
   if (result === undefined) {
