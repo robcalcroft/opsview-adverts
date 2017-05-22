@@ -18,7 +18,7 @@ const indexes = {
 
 log('info', 'Rotator started; rotating adverts every 48 hours');
 
-new Cron('* * */2 * * *', () => { // eslint-disable-line no-new
+new Cron('* */15 * * * *', () => { // eslint-disable-line no-new
   log('info', 'Advert tick');
   const baseUrl = `${apiUrl}/api/advert`;
 
@@ -78,5 +78,5 @@ new Cron('* * */2 * * *', () => { // eslint-disable-line no-new
     indexes[size] += 1;
 
     return true;
-  }).catch(error => log('error', error.message)));
+  }).catch(error => log('error', 'Error requesting advert from S3', error.message, error)));
 }, null, true, 'Europe/London');

@@ -42,7 +42,6 @@ var templateAdvertCard = function(advert, size) {
     '<div class="card-stacked">' +
       '<div class="card-content">' +
         '<p>Advert for ' + size + '</p>' +
-        '<p><b>Do not remove live adverts as this can cause issues on S3, wait till they go out of rotation</b></p>' +
       '</div>' +
       '<div class="card-action">' +
         '<a target="_blank" href="' + advert.redirect_url + '">Go to URL</a>' +

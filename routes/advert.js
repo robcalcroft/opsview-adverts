@@ -183,44 +183,53 @@ router.delete('/advert', (req, res) => {
           message: `Could not find advert in database: ${error.message}`,
         });
       } else if (result.length !== 0) {
-        log('info', 'Deleting', `${result[0].target_size}/${result[0].image_name}`, 'from S3');
-        // Potentially delete the advert.json if needed
-        // , {
-        //   Key: `${result[0].target_size}/advert.json`,
-        // }
-        const deleter = client.deleteObjects({
-          Bucket: bucket,
-          Delete: {
-            Objects: [{
-              Key: `${result[0].target_size}/${result[0].image_name}`,
-            }],
-          },
-        });
+        db.all('select * from adverts where target_size=?', [result[0].target_size], (error, adverts) => {
+          if (adverts.length === 1) {
+            return res.status(403).json({
+              success: false,
+              message: 'Cannot delete only advert in this size',
+            });
+          }
 
-        deleter.on('error', (deleteError) => {
-          log('error', 'Error when deleting advert image from S3:', deleteError.message);
-          res.status(500).json({
-            success: false,
-            message: `Error when deleting advert image from S3: ${deleteError.message}`,
+          log('info', 'Deleting', `${result[0].target_size}/${result[0].image_name}`, 'from S3');
+          // Potentially delete the advert.json if needed
+          // , {
+          //   Key: `${result[0].target_size}/advert.json`,
+          // }
+          const deleter = client.deleteObjects({
+            Bucket: bucket,
+            Delete: {
+              Objects: [{
+                Key: `${result[0].target_size}/${result[0].image_name}`,
+              }],
+            },
           });
-        });
 
-        deleter.on('end', () => {
-          log('success', 'Deleted image from S3');
+          deleter.on('error', (deleteError) => {
+            log('error', 'Error when deleting advert image from S3:', deleteError.message);
+            res.status(500).json({
+              success: false,
+              message: `Error when deleting advert image from S3: ${deleteError.message}`,
+            });
+          });
 
-          db.run('delete from adverts where image_name=?', [result[0].image_name], (databaseError) => {
-            if (databaseError) {
-              log('error', 'Error when deleting advert from database:', databaseError.message);
-              res.status(500).json({
-                success: false,
-                message: `Error when deleting advert from database: ${databaseError.message}`,
-              });
-            } else {
-              log('success', 'Deleted advert from database');
-              res.json({
-                success: true,
-              });
-            }
+          deleter.on('end', () => {
+            log('success', 'Deleted image from S3');
+
+            db.run('delete from adverts where image_name=?', [result[0].image_name], (databaseError) => {
+              if (databaseError) {
+                log('error', 'Error when deleting advert from database:', databaseError.message);
+                res.status(500).json({
+                  success: false,
+                  message: `Error when deleting advert from database: ${databaseError.message}`,
+                });
+              } else {
+                log('success', 'Deleted advert from database');
+                res.json({
+                  success: true,
+                });
+              }
+            });
           });
         });
       } else {
