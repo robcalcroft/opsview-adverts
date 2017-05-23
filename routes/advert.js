@@ -185,7 +185,7 @@ router.delete('/advert', (req, res) => {
         });
       } else if (result.length !== 0) {
         db.all('select * from adverts where target_size=?', [result[0].target_size], (dbError, adverts) => request(`https://s3.amazonaws.com/${bucket}/${result[0].target_size}/advert.json`)
-          .then((adError, response, currentAd) => {
+          .then(currentAd => {
             const splitImageUrl = JSON.parse(currentAd).image_url.split('/');
 
             if (splitImageUrl[splitImageUrl.length - 1] === imageName) {
@@ -243,6 +243,10 @@ router.delete('/advert', (req, res) => {
               });
             });
           })
+	  .catch(error => res.status(500).json({
+	    success: false,
+	    message: error.message,
+	  }))
         );
       } else {
         log('error', 'Could not find image in database');
