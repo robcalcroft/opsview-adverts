@@ -74,6 +74,7 @@ var getCurrentAdverts = function() {
 var toggleAdsListener = function() {
   $('button#toggleAds').click(function() {
     var areAdsEnabled = $(this).attr('data-enabled');
+    var previousText = $(this).html();
     $(this).html('Loading...');
     $.post('api/status', { enabled: areAdsEnabled === '1' ? 0 : 1 })
     .fail(function(error) {
@@ -84,6 +85,9 @@ var toggleAdsListener = function() {
       );
     })
     .always(function() {
+      $(this).html(previousText);
+    }.bind(this))
+    .done(function() {
       window.location.reload();
     });
   });
