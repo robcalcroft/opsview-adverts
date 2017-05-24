@@ -105,6 +105,55 @@ router.post('/advert/new', upload.single('advert_image'), (req, res) => {
     }));
   }
 
+  const legacyAdvert = new Promise((resolve) => {
+    const targetSizeMap = {
+      '500x300': 'login',
+      '600x200': 'reload',
+      '640x960': 'phone',
+    };
+    const uploadLegacyAdvert = () => {
+      const redirectHTML = `<html><head><meta http-equiv="refresh" content="0; URL='${advertRedirectUrl}'" /></head></html>`;
+      const htmlFileName = `opsview-ad-${targetSizeMap[advertTargetSize]}-redirect.html`;
+      const htmlFilePath = `./tmp/${htmlFileName}`;
+      fs.writeFileSync(htmlFileName, redirectHTML);
+      const uploader = client.uploadFile({
+        localFile: htmlFilePath,
+        s3Params: {
+          ACL: 'public-read',
+          Bucket: bucket,
+          Key: htmlFileName,
+        },
+      });
+
+      uploader.on('end', () => {
+        log('success', `Legacy advert redirect file for size ${advertTargetSize} uploaded`);
+
+        // Attempt to delete the temp file we created as cleanup
+        try {
+          fs.unlinkSync(htmlFilePath);
+        } catch (error) {
+          log('warning', 'Error removing temporary file, this should be cleaned up by the OS');
+        }
+        resolve();
+      });
+    };
+
+    request(`https://s3.amazonaws.com/${bucket}/${targetSizeMap[advertTargetSize]}.png`)
+    .then(() => {
+      log('info', 'Advert found');
+      if (advertOverride) {
+        log('info', 'Reuploading legacy advert');
+        uploadLegacyAdvert();
+      } else {
+        resolve();
+      }
+    })
+    .catch((error) => {
+      log('info', 'Could not find advert on S3, this is normal if the ad is deleted or doesn\'t exist in the first place', error.message);
+      uploadLegacyAdvert();
+    });
+  });
+
   // When the metadata and image have been uploaded this runs or when one of them fails
   Promise.all(promisesToWaitFor).then(() => {
     log('success', 'All advert metadata and imagery uploaded successfully to S3');
