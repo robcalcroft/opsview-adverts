@@ -2,7 +2,7 @@ const request = require('request-promise-native');
 const Cron = require('cron').CronJob;
 const fs = require('fs');
 const crypto = require('crypto');
-const { client, log } = require('./helpers');
+const { client, log, downloadImageAndUploadLegacyAdvert } = require('./helpers');
 const { amazon_bucket: bucket, rotator_api_url: apiUrl } = require('./.env.json');
 
 // Set up the possible sizes we support
@@ -35,7 +35,13 @@ new Cron('0 0 */2 * * *', () => { // eslint-disable-line no-new
       return false;
     }
 
-    const currentAdvertImageUrl = amazonResult.image_url.split('/');
+    let currentAdvertImageUrl;
+    try {
+      currentAdvertImageUrl = amazonResult.image_url.split('/');
+    } catch (error) {
+      log('error', error.message);
+      return false;
+    }
 
     // Ensure this next index has something we can use, otherwise we reset to the end as we assume
     // that there are no more adverts
@@ -62,20 +68,32 @@ new Cron('0 0 */2 * * *', () => { // eslint-disable-line no-new
       redirect_url: newAdvert.redirect_url,
     }));
 
-    const uploader = client.uploadFile({
-      localFile: `./tmp/${tmpFileName}`,
-      s3Params: {
-        ACL: 'public-read',
-        Bucket: bucket,
-        Key: `${size}/advert.json`,
-      },
-    });
-
-    uploader.on('end', () => log('success', `Advert for size ${size} successfully updated, new advert name is ${newAdvert.name}`));
-
-    uploader.on('error', error => log('error', 'Error updating new advert on S3, action has not been completed', error.message));
-
     indexes[size] += 1;
+
+    Promise.all([
+      new Promise((resolve) => {
+        downloadImageAndUploadLegacyAdvert({
+          image_url: `https://s3.amazonaws.com/${bucket}/${size}/${newAdvert.image_name}`,
+          redirect_url: newAdvert.redirect_url,
+        }, './tmp/', resolve);
+      }),
+      new Promise((resolve, reject) => {
+        const uploader = client.uploadFile({
+          localFile: `./tmp/${tmpFileName}`,
+          s3Params: {
+            ACL: 'public-read',
+            Bucket: bucket,
+            Key: `${size}/advert.json`,
+          },
+        });
+        uploader.on('end', () => resolve());
+        uploader.on('error', error => reject(error));
+      }),
+    ])
+    .then(() => {
+      log('success', `Advert for size ${size} successfully updated, new advert name is ${newAdvert.name}`);
+    })
+    .catch(error => log('error', 'Error updating new advert on S3, action has not been completed', error.message));
 
     return true;
   }).catch(error => log('error', 'Error requesting advert from S3', error.message, error)));

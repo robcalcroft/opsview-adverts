@@ -4,7 +4,7 @@ const request = require('request-promise-native');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const { client, log, db } = require('../helpers');
+const { client, log, db, downloadImageAndUploadLegacyAdvert } = require('../helpers');
 const { amazon_bucket: bucket } = require('../.env.json');
 
 const router = express.Router();
@@ -14,6 +14,32 @@ const tmpPath = path.resolve('tmp');
 router.post('/status', bodyParser.urlencoded({ extended: true }), (req, res) => {
   const enabled = req.body.enabled === '1';
   log('info', `${enabled ? 'Enabling' : 'Disabling'} adverts`);
+
+  if (!enabled) {
+    // Disabling
+    const filesToDelete = [
+      'opsview-ad-login.png',
+      'opsview-ad-login.html',
+      'opsview-ad-login-redirect.html',
+      'opsview-ad-phone.png',
+      'opsview-ad-phone.html',
+      'opsview-ad-phone-redirect.html',
+      'opsview-ad-reload.png',
+      'opsview-ad-reload.html',
+      'opsview-ad-reload-redirect.html',
+    ];
+
+    const deleter = client.deleteObjects({
+      Bucket: bucket,
+      Delete: {
+        Objects: filesToDelete.map(file => ({ Key: file })),
+      },
+    });
+
+    deleter.on('end', () => log('success', 'All legacy advert files deleted (this is the "disabled" state)'));
+
+    deleter.on('error', error => log('error', 'Error deleting legacy advert from S3', error.message));
+  }
 
   db.all('select * from adverts', (dbError, adverts) => {
     if (adverts && adverts.length === 0) {
@@ -65,6 +91,23 @@ router.post('/status', bodyParser.urlencoded({ extended: true }), (req, res) => 
           reject(error);
         });
       }));
+
+      // Reupload all of our legacy adverts
+      if (enabled) {
+        uploaders.push(new Promise((resolve) => {
+          if (successfulResponses.length === 0) {
+            log('warning', 'No successful responses');
+            return resolve();
+          }
+          const legacyUploaders = successfulResponses.map(response => new Promise((
+            resoveLegacyUploader
+          ) => {
+            const advertData = JSON.parse(response.data);
+            downloadImageAndUploadLegacyAdvert(advertData, tmpPath, resoveLegacyUploader);
+          }));
+          return Promise.all(legacyUploaders).then(resolve).catch(error => log('error', error.message) && resolve());
+        }));
+      }
 
       Promise.all(uploaders).then(() => {
         db.run('update status set enabled=? where status_name=?', [enabled, 'adverts'], (error) => {

@@ -5,12 +5,16 @@ const routes = require('./routes/index');
 const { log, db } = require('./helpers');
 const statusSql = require('./schema/status');
 const advertsSql = require('./schema/adverts');
-const { amazon_bucket } = require('./.env.json');
+const { amazon_bucket, web_base_url } = require('./.env.json');
 
 const app = express();
 
 if (!amazon_bucket) { // eslint-disable-line camelcase
   throw new Error('You need `amazon_bucket` to be present in your .env.json');
+}
+
+if (!web_base_url) { // eslint-disable-line camelcase
+  throw new Error('No base URL specified, add it in your .env.json');
 }
 
 app.engine('handlebars', handlebars({ defaultLayout: 'main' }));
@@ -53,7 +57,7 @@ db.all('select * from adverts', (error, result) => {
 
 app.use('/api', routes);
 
-app.get('/', (req, res) => res.render('index'));
+app.get('/', (req, res) => res.render('index', { baseUrl: web_base_url }));
 
 app.listen(process.env.PORT || 8000, () => log(
   'info', `Server running on port ${process.env.PORT || 8000}`

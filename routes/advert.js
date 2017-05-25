@@ -3,7 +3,7 @@ const upload = require('multer')({ dest: 'tmp/' });
 const path = require('path');
 const request = require('request-promise-native');
 const fs = require('fs');
-const { log, client, db } = require('../helpers');
+const { log, client, db, targetSizeLegacyMap, uploadLegacyAdvert } = require('../helpers');
 const { amazon_bucket: bucket } = require('../.env.json');
 
 const router = express.Router();
@@ -103,56 +103,26 @@ router.post('/advert/new', upload.single('advert_image'), (req, res) => {
         });
       });
     }));
-  }
 
-  const legacyAdvert = new Promise((resolve) => {
-    const targetSizeMap = {
-      '500x300': 'login',
-      '600x200': 'reload',
-      '640x960': 'phone',
-    };
-    const uploadLegacyAdvert = () => {
-      const redirectHTML = `<html><head><meta http-equiv="refresh" content="0; URL='${advertRedirectUrl}'" /></head></html>`;
-      const htmlFileName = `opsview-ad-${targetSizeMap[advertTargetSize]}-redirect.html`;
-      const htmlFilePath = `./tmp/${htmlFileName}`;
-      fs.writeFileSync(htmlFileName, redirectHTML);
-      const uploader = client.uploadFile({
-        localFile: htmlFilePath,
-        s3Params: {
-          ACL: 'public-read',
-          Bucket: bucket,
-          Key: htmlFileName,
-        },
-      });
-
-      uploader.on('end', () => {
-        log('success', `Legacy advert redirect file for size ${advertTargetSize} uploaded`);
-
-        // Attempt to delete the temp file we created as cleanup
-        try {
-          fs.unlinkSync(htmlFilePath);
-        } catch (error) {
-          log('warning', 'Error removing temporary file, this should be cleaned up by the OS');
+    log('info', 'Uploading legacy advert');
+    promisesToWaitFor.push(new Promise((resolve) => {
+      request(`https://s3.amazonaws.com/${bucket}/opsview-ad-${targetSizeLegacyMap[advertTargetSize]}.png`)
+      .then(() => {
+        log('info', 'Advert found');
+        if (advertOverride) {
+          log('info', 'Reuploading legacy advert');
+          uploadLegacyAdvert(advertRedirectUrl, advertTargetSize, `${tmpPath}/${filename}`, resolve);
+        } else {
+          log('info', 'No override set; skipping');
+          resolve();
         }
-        resolve();
+      })
+      .catch((error) => {
+        log('info', 'Could not find advert on S3, this is normal if the ad is deleted or doesn\'t exist in the first place', error.message);
+        uploadLegacyAdvert(advertRedirectUrl, advertTargetSize, `${tmpPath}/${filename}`, resolve);
       });
-    };
-
-    request(`https://s3.amazonaws.com/${bucket}/${targetSizeMap[advertTargetSize]}.png`)
-    .then(() => {
-      log('info', 'Advert found');
-      if (advertOverride) {
-        log('info', 'Reuploading legacy advert');
-        uploadLegacyAdvert();
-      } else {
-        resolve();
-      }
-    })
-    .catch((error) => {
-      log('info', 'Could not find advert on S3, this is normal if the ad is deleted or doesn\'t exist in the first place', error.message);
-      uploadLegacyAdvert();
-    });
-  });
+    }));
+  }
 
   // When the metadata and image have been uploaded this runs or when one of them fails
   Promise.all(promisesToWaitFor).then(() => {
@@ -234,7 +204,7 @@ router.delete('/advert', (req, res) => {
         });
       } else if (result.length !== 0) {
         db.all('select * from adverts where target_size=?', [result[0].target_size], (dbError, adverts) => request(`https://s3.amazonaws.com/${bucket}/${result[0].target_size}/advert.json`)
-          .then(currentAd => {
+          .then((currentAd) => {
             const splitImageUrl = JSON.parse(currentAd).image_url.split('/');
 
             if (splitImageUrl[splitImageUrl.length - 1] === imageName) {
@@ -292,10 +262,10 @@ router.delete('/advert', (req, res) => {
               });
             });
           })
-	  .catch(error => res.status(500).json({
-	    success: false,
-	    message: error.message,
-	  }))
+          .catch(error1 => res.status(500).json({
+            success: false,
+            message: error1.message,
+          }))
         );
       } else {
         log('error', 'Could not find image in database');
